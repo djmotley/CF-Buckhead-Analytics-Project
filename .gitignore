@@ -1,0 +1,47 @@
+# OS / Editors
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.so
+*.egg-info/
+.eggs/
+.env
+.venv/
+venv/
+build/
+dist/
+pip-wheel-metadata/
+.cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Virtualenv/pyenv
+pythonenv*
+.pyenv
+.python-version
+
+# Logs & temp
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Local data
+data/
+*.sqlite*

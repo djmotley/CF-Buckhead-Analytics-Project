@@ -27,10 +27,6 @@ pip-wheel-metadata/
 coverage.xml
 htmlcov/
 
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb
-
 # Virtualenv/pyenv
 pythonenv*
 .pyenv
@@ -43,5 +39,4 @@ pythonenv*
 *.swo
 
 # Local data
-data/
 *.sqlite*

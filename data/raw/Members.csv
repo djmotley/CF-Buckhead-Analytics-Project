@@ -1,0 +1,301 @@
+Member_ID,First_Name,Join_Date,Membership_Type,Referral_Source
+1,Member1,2024-11-23,Punch Card,Friend
+2,Member2,2024-02-27,Foundations,Friend
+3,Member3,2024-01-13,Unlimited,Google
+4,Member4,2025-01-14,Punch Card,Instagram
+5,Member5,2024-05-20,Punch Card,Walk-in
+6,Member6,2024-05-05,Foundations,Event
+7,Member7,2024-04-24,Unlimited,Instagram
+8,Member8,2024-03-12,Unlimited,Event
+9,Member9,2025-01-12,Punch Card,Google
+10,Member10,2024-02-22,3x/Week,Google
+11,Member11,2024-12-12,Punch Card,Friend
+12,Member12,2025-01-14,Punch Card,Walk-in
+13,Member13,2024-10-06,Punch Card,Event
+14,Member14,2024-02-14,Punch Card,Instagram
+15,Member15,2024-10-29,Foundations,Google
+16,Member16,2024-08-04,Unlimited,Friend
+17,Member17,2024-01-17,Foundations,Friend
+18,Member18,2024-01-16,Foundations,Event
+19,Member19,2024-02-17,Foundations,Google
+20,Member20,2024-04-21,Punch Card,Walk-in
+21,Member21,2024-04-29,3x/Week,Google
+22,Member22,2024-09-15,Unlimited,Event
+23,Member23,2024-11-04,3x/Week,Event
+24,Member24,2024-01-14,Foundations,Google
+25,Member25,2024-10-14,Foundations,Event
+26,Member26,2024-04-11,3x/Week,Google
+27,Member27,2025-01-01,3x/Week,Instagram
+28,Member28,2024-11-28,3x/Week,Google
+29,Member29,2024-12-25,Foundations,Google
+30,Member30,2024-10-06,Foundations,Event
+31,Member31,2024-08-02,Unlimited,Event
+32,Member32,2024-04-22,Unlimited,Friend
+33,Member33,2024-08-17,Foundations,Friend
+34,Member34,2024-10-28,3x/Week,Instagram
+35,Member35,2024-05-22,3x/Week,Friend
+36,Member36,2025-02-18,Unlimited,Google
+37,Member37,2024-01-04,Foundations,Event
+38,Member38,2025-01-23,Unlimited,Friend
+39,Member39,2025-02-16,Unlimited,Friend
+40,Member40,2024-03-22,Punch Card,Instagram
+41,Member41,2024-12-23,Punch Card,Instagram
+42,Member42,2024-08-04,Punch Card,Google
+43,Member43,2024-06-23,3x/Week,Event
+44,Member44,2024-05-22,Foundations,Instagram
+45,Member45,2024-03-20,Foundations,Friend
+46,Member46,2024-04-20,Foundations,Event
+47,Member47,2025-01-25,Foundations,Event
+48,Member48,2024-06-21,Punch Card,Friend
+49,Member49,2024-02-22,3x/Week,Instagram
+50,Member50,2024-02-17,3x/Week,Friend
+51,Member51,2024-07-13,Punch Card,Event
+52,Member52,2024-02-19,3x/Week,Walk-in
+53,Member53,2024-07-02,Punch Card,Walk-in
+54,Member54,2025-03-09,Foundations,Google
+55,Member55,2024-06-25,Punch Card,Friend
+56,Member56,2024-11-05,Foundations,Friend
+57,Member57,2024-05-15,Foundations,Google
+58,Member58,2025-02-17,Unlimited,Google
+59,Member59,2024-01-23,Punch Card,Google
+60,Member60,2025-01-08,Unlimited,Event
+61,Member61,2024-08-23,Punch Card,Friend
+62,Member62,2024-10-01,Punch Card,Event
+63,Member63,2024-03-04,Unlimited,Google
+64,Member64,2024-07-12,Unlimited,Friend
+65,Member65,2024-02-10,Punch Card,Event
+66,Member66,2024-10-09,3x/Week,Event
+67,Member67,2024-05-30,Foundations,Google
+68,Member68,2025-02-28,Unlimited,Friend
+69,Member69,2024-11-17,Foundations,Google
+70,Member70,2024-11-12,3x/Week,Friend
+71,Member71,2024-07-04,3x/Week,Walk-in
+72,Member72,2024-10-22,3x/Week,Instagram
+73,Member73,2024-04-08,Unlimited,Instagram
+74,Member74,2024-12-26,3x/Week,Instagram
+75,Member75,2024-02-05,Unlimited,Google
+76,Member76,2024-01-24,3x/Week,Walk-in
+77,Member77,2024-12-04,Foundations,Friend
+78,Member78,2024-04-26,Foundations,Event
+79,Member79,2025-01-30,Punch Card,Friend
+80,Member80,2024-05-28,Foundations,Event
+81,Member81,2024-02-10,Punch Card,Friend
+82,Member82,2025-03-13,Foundations,Walk-in
+83,Member83,2024-04-29,Unlimited,Event
+84,Member84,2024-02-21,Foundations,Google
+85,Member85,2024-07-13,Punch Card,Friend
+86,Member86,2024-05-22,Punch Card,Friend
+87,Member87,2024-08-20,3x/Week,Event
+88,Member88,2024-11-21,Unlimited,Google
+89,Member89,2025-03-03,Foundations,Google
+90,Member90,2024-07-05,3x/Week,Walk-in
+91,Member91,2024-03-24,Foundations,Google
+92,Member92,2024-07-08,Foundations,Google
+93,Member93,2024-06-30,3x/Week,Google
+94,Member94,2024-04-17,3x/Week,Instagram
+95,Member95,2024-12-09,3x/Week,Walk-in
+96,Member96,2024-05-16,3x/Week,Friend
+97,Member97,2024-12-25,3x/Week,Event
+98,Member98,2024-12-15,Foundations,Friend
+99,Member99,2024-11-27,3x/Week,Walk-in
+100,Member100,2024-02-06,Unlimited,Event
+101,Member101,2024-11-07,Punch Card,Walk-in
+102,Member102,2024-11-21,3x/Week,Google
+103,Member103,2024-03-28,3x/Week,Event
+104,Member104,2024-09-30,Foundations,Google
+105,Member105,2025-01-08,3x/Week,Friend
+106,Member106,2024-05-05,3x/Week,Friend
+107,Member107,2024-03-24,3x/Week,Event
+108,Member108,2024-08-24,Foundations,Event
+109,Member109,2024-07-13,3x/Week,Walk-in
+110,Member110,2024-05-18,Punch Card,Walk-in
+111,Member111,2024-11-23,Foundations,Google
+112,Member112,2024-12-18,Punch Card,Event
+113,Member113,2024-10-12,Foundations,Friend
+114,Member114,2024-04-22,3x/Week,Walk-in
+115,Member115,2024-12-16,Punch Card,Walk-in
+116,Member116,2024-06-15,Foundations,Friend
+117,Member117,2025-03-07,Unlimited,Walk-in
+118,Member118,2025-01-28,3x/Week,Google
+119,Member119,2025-02-01,Foundations,Event
+120,Member120,2024-01-29,Unlimited,Friend
+121,Member121,2024-04-27,Foundations,Event
+122,Member122,2025-02-24,Unlimited,Walk-in
+123,Member123,2024-01-17,3x/Week,Walk-in
+124,Member124,2025-02-16,Punch Card,Friend
+125,Member125,2024-06-10,Unlimited,Google
+126,Member126,2024-07-24,Foundations,Instagram
+127,Member127,2024-05-17,3x/Week,Friend
+128,Member128,2024-02-03,Unlimited,Instagram
+129,Member129,2024-04-18,Foundations,Instagram
+130,Member130,2024-10-17,Foundations,Google
+131,Member131,2025-01-02,Foundations,Instagram
+132,Member132,2024-06-10,Unlimited,Instagram
+133,Member133,2024-04-18,Unlimited,Google
+134,Member134,2024-12-01,Unlimited,Instagram
+135,Member135,2024-09-12,Punch Card,Instagram
+136,Member136,2024-07-21,Unlimited,Instagram
+137,Member137,2024-11-25,Unlimited,Friend
+138,Member138,2024-08-22,Unlimited,Friend
+139,Member139,2024-03-14,Punch Card,Friend
+140,Member140,2024-05-15,Unlimited,Google
+141,Member141,2024-03-12,Foundations,Walk-in
+142,Member142,2024-05-06,Unlimited,Instagram
+143,Member143,2025-01-16,Foundations,Instagram
+144,Member144,2024-10-14,Foundations,Google
+145,Member145,2024-10-02,Foundations,Instagram
+146,Member146,2024-05-14,Punch Card,Friend
+147,Member147,2025-01-17,Punch Card,Walk-in
+148,Member148,2024-10-26,Punch Card,Event
+149,Member149,2024-08-07,Unlimited,Instagram
+150,Member150,2024-10-25,Foundations,Friend
+151,Member151,2024-07-23,Punch Card,Event
+152,Member152,2024-07-04,Punch Card,Walk-in
+153,Member153,2024-04-22,Unlimited,Event
+154,Member154,2024-03-11,Punch Card,Friend
+155,Member155,2024-09-17,Unlimited,Event
+156,Member156,2024-09-09,3x/Week,Google
+157,Member157,2024-02-16,Punch Card,Event
+158,Member158,2025-01-21,3x/Week,Instagram
+159,Member159,2024-01-25,Unlimited,Instagram
+160,Member160,2024-02-26,Foundations,Google
+161,Member161,2024-03-19,Punch Card,Friend
+162,Member162,2024-11-17,Unlimited,Instagram
+163,Member163,2024-03-22,Foundations,Walk-in
+164,Member164,2025-02-09,Foundations,Instagram
+165,Member165,2024-12-14,3x/Week,Instagram
+166,Member166,2024-08-04,Unlimited,Friend
+167,Member167,2024-11-01,Foundations,Event
+168,Member168,2024-02-02,Punch Card,Instagram
+169,Member169,2024-07-16,Punch Card,Google
+170,Member170,2024-07-14,3x/Week,Event
+171,Member171,2024-11-01,Foundations,Walk-in
+172,Member172,2024-08-27,Unlimited,Friend
+173,Member173,2024-09-27,Punch Card,Walk-in
+174,Member174,2024-05-08,Foundations,Event
+175,Member175,2024-10-10,Foundations,Event
+176,Member176,2024-01-06,3x/Week,Event
+177,Member177,2024-12-14,Punch Card,Walk-in
+178,Member178,2025-01-04,Punch Card,Event
+179,Member179,2024-02-28,Unlimited,Walk-in
+180,Member180,2024-12-15,Punch Card,Event
+181,Member181,2024-10-01,Unlimited,Google
+182,Member182,2025-01-19,Punch Card,Event
+183,Member183,2024-05-16,3x/Week,Walk-in
+184,Member184,2025-01-28,Punch Card,Instagram
+185,Member185,2024-11-24,Unlimited,Event
+186,Member186,2024-06-23,Unlimited,Instagram
+187,Member187,2024-02-27,3x/Week,Google
+188,Member188,2024-05-30,Punch Card,Friend
+189,Member189,2024-08-10,Punch Card,Google
+190,Member190,2024-03-21,3x/Week,Event
+191,Member191,2024-08-20,Punch Card,Instagram
+192,Member192,2024-01-02,Punch Card,Instagram
+193,Member193,2025-01-04,Unlimited,Walk-in
+194,Member194,2025-01-03,Punch Card,Instagram
+195,Member195,2024-05-14,Punch Card,Walk-in
+196,Member196,2024-09-13,3x/Week,Friend
+197,Member197,2025-01-25,3x/Week,Event
+198,Member198,2024-04-01,Foundations,Walk-in
+199,Member199,2024-09-16,Unlimited,Friend
+200,Member200,2024-02-24,Punch Card,Instagram
+201,Member201,2024-11-16,Punch Card,Instagram
+202,Member202,2024-06-01,Foundations,Friend
+203,Member203,2025-03-06,Punch Card,Instagram
+204,Member204,2024-11-23,Unlimited,Friend
+205,Member205,2024-09-16,Foundations,Walk-in
+206,Member206,2024-11-07,Unlimited,Walk-in
+207,Member207,2024-04-11,Foundations,Friend
+208,Member208,2024-03-19,Foundations,Walk-in
+209,Member209,2024-07-10,3x/Week,Walk-in
+210,Member210,2025-01-25,Unlimited,Walk-in
+211,Member211,2024-03-23,Punch Card,Google
+212,Member212,2024-10-03,Punch Card,Event
+213,Member213,2025-02-02,Unlimited,Instagram
+214,Member214,2024-09-28,Punch Card,Google
+215,Member215,2024-01-01,Punch Card,Walk-in
+216,Member216,2024-11-02,Unlimited,Friend
+217,Member217,2024-06-14,Foundations,Walk-in
+218,Member218,2024-09-07,Unlimited,Event
+219,Member219,2024-01-10,Foundations,Walk-in
+220,Member220,2024-02-27,Punch Card,Friend
+221,Member221,2024-07-04,Punch Card,Event
+222,Member222,2025-03-01,Punch Card,Walk-in
+223,Member223,2025-02-17,3x/Week,Event
+224,Member224,2024-06-06,Foundations,Instagram
+225,Member225,2024-05-02,3x/Week,Instagram
+226,Member226,2024-01-30,3x/Week,Walk-in
+227,Member227,2024-05-03,Unlimited,Event
+228,Member228,2024-10-17,3x/Week,Friend
+229,Member229,2024-02-10,Unlimited,Walk-in
+230,Member230,2024-02-13,Unlimited,Instagram
+231,Member231,2025-01-09,3x/Week,Instagram
+232,Member232,2024-09-05,Foundations,Walk-in
+233,Member233,2025-02-21,Foundations,Event
+234,Member234,2024-02-05,Foundations,Instagram
+235,Member235,2025-01-24,Foundations,Event
+236,Member236,2024-09-29,Foundations,Instagram
+237,Member237,2025-01-27,3x/Week,Instagram
+238,Member238,2024-03-05,3x/Week,Google
+239,Member239,2024-03-06,Punch Card,Instagram
+240,Member240,2024-12-03,Foundations,Friend
+241,Member241,2024-08-31,3x/Week,Walk-in
+242,Member242,2024-10-08,Punch Card,Walk-in
+243,Member243,2024-03-25,Foundations,Event
+244,Member244,2024-05-15,Unlimited,Instagram
+245,Member245,2024-09-27,Punch Card,Friend
+246,Member246,2024-11-06,3x/Week,Event
+247,Member247,2024-08-04,Unlimited,Google
+248,Member248,2024-04-18,Unlimited,Event
+249,Member249,2024-10-03,Unlimited,Event
+250,Member250,2025-01-21,Punch Card,Instagram
+251,Member251,2025-01-08,3x/Week,Google
+252,Member252,2024-12-19,Unlimited,Event
+253,Member253,2024-04-12,Foundations,Friend
+254,Member254,2024-12-31,Unlimited,Friend
+255,Member255,2024-06-08,Unlimited,Walk-in
+256,Member256,2024-07-23,Punch Card,Google
+257,Member257,2024-12-09,Punch Card,Google
+258,Member258,2024-11-28,3x/Week,Walk-in
+259,Member259,2024-07-10,Foundations,Event
+260,Member260,2024-08-12,Punch Card,Google
+261,Member261,2024-09-21,Unlimited,Friend
+262,Member262,2024-08-19,3x/Week,Friend
+263,Member263,2024-03-02,Unlimited,Instagram
+264,Member264,2024-05-06,Unlimited,Google
+265,Member265,2024-04-25,Punch Card,Event
+266,Member266,2024-02-02,3x/Week,Walk-in
+267,Member267,2024-06-22,Foundations,Walk-in
+268,Member268,2024-01-11,Foundations,Event
+269,Member269,2024-10-28,Punch Card,Instagram
+270,Member270,2024-10-10,Punch Card,Walk-in
+271,Member271,2024-04-27,3x/Week,Google
+272,Member272,2024-10-28,Foundations,Instagram
+273,Member273,2024-04-22,Foundations,Google
+274,Member274,2024-01-04,Foundations,Friend
+275,Member275,2024-02-06,Unlimited,Instagram
+276,Member276,2024-12-28,Foundations,Walk-in
+277,Member277,2024-11-19,Unlimited,Instagram
+278,Member278,2024-01-31,3x/Week,Instagram
+279,Member279,2024-04-27,Unlimited,Instagram
+280,Member280,2024-02-04,3x/Week,Instagram
+281,Member281,2024-01-17,Foundations,Google
+282,Member282,2024-06-18,Foundations,Friend
+283,Member283,2024-02-06,3x/Week,Event
+284,Member284,2024-09-20,Punch Card,Instagram
+285,Member285,2024-05-01,3x/Week,Walk-in
+286,Member286,2024-05-22,Punch Card,Instagram
+287,Member287,2024-12-08,Unlimited,Walk-in
+288,Member288,2024-09-05,Unlimited,Google
+289,Member289,2024-04-19,Unlimited,Walk-in
+290,Member290,2024-10-03,Foundations,Event
+291,Member291,2024-03-08,Unlimited,Friend
+292,Member292,2025-01-05,Punch Card,Walk-in
+293,Member293,2024-10-19,Unlimited,Walk-in
+294,Member294,2024-10-22,3x/Week,Friend
+295,Member295,2024-08-30,3x/Week,Event
+296,Member296,2024-05-04,Foundations,Instagram
+297,Member297,2025-02-05,3x/Week,Walk-in
+298,Member298,2024-08-30,Punch Card,Friend
+299,Member299,2025-02-17,Unlimited,Google
+300,Member300,2024-07-27,Foundations,Friend

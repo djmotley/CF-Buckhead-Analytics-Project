@@ -4,7 +4,7 @@ Using data to proactively identify at-risk members and improve retention.
 
 ---
 
-## 📖 Overview
+## Overview
 
 This project delivers a complete analytics pipeline and interactive dashboard that helps **CrossFit Buckhead** understand and reduce member churn. The system consolidates attendance, cancellation, membership, and retail purchase data to:
 - Spot early signs of disengagement
@@ -15,7 +15,7 @@ The end-to-end workflow transforms raw inputs into cleaned datasets, engineered 
 
 ---
 
-## ⚙️ Project Structure
+## Project Structure
 
 ```text
 crossfit-buckhead-analytics/
@@ -41,7 +41,7 @@ crossfit-buckhead-analytics/
 
 ---
 
-## 🚀 Pipeline Workflow
+## Pipeline Workflow
 
 1. **Data Preparation (`data_prep.py`)**
    Loads CSV exports, standardizes formats, and creates unified member views.
@@ -49,16 +49,16 @@ crossfit-buckhead-analytics/
    Builds behavioral metrics such as days since last check-in, attendance momentum, retail cadence, and cancellation flags.
 3. **Risk Scoring (`risk_scoring.py`)**
    Applies a weighted formula to produce churn risk scores (0–100) and tags members:
-   - 🟢 **Green:** Low risk
-   - 🟡 **Yellow:** Moderate risk
-   - 🔴 **Red:** High risk
+   - **Green:** Low risk
+   - **Yellow:** Moderate risk
+   - **Red:** High risk
    Outputs are written to `data/processed/` and outreach lists to `reports/outreach/`.
 4. **Dashboard (`dashboard.py`)**
    Streamlit app that summarizes the latest results with metrics, histograms, boxplots, and top at-risk members. Users can rerun the latest analysis and browse historical score files.
 
 ---
 
-## 🛠️ Getting Started
+## Getting Started
 
 1. Install dependencies (`pip install -e .` from the project root).
 2. Place new data exports inside `data/raw_sample_dylan/` (or adjust paths in `config.py`).
@@ -71,7 +71,7 @@ crossfit-buckhead-analytics/
 
 ---
 
-## 📊 Run the Dashboard
+## Run the Dashboard
 
 Launch the Streamlit app to explore the latest outputs:
 
@@ -83,7 +83,7 @@ Open your browser to `http://localhost:8501` to view live metrics, charts, and o
 
 ---
 
-## 🔍 Key Insights Demonstrated
+## Key Insights Demonstrated
 
 - Data engineering with Pandas and modular Python scripts
 - Feature design for predictive analytics use cases
@@ -94,7 +94,7 @@ Open your browser to `http://localhost:8501` to view live metrics, charts, and o
 
 ---
 
-## 🧩 Future Enhancements
+## Future Enhancements
 
 - Integrate real-time PushPress API data
 - Incorporate class attendance streaks or PR tracking as behavioral features
@@ -103,7 +103,7 @@ Open your browser to `http://localhost:8501` to view live metrics, charts, and o
 
 ---
 
-## 👤 Authors
+## Authors
 
 Dylan Alexander
 Derek Motley

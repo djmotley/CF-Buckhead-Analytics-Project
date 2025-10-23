@@ -36,14 +36,14 @@ st.caption(f"Currently viewing: `{selected_file}`")
 st.dataframe(df.head())
 
 # --- refresh button to rerun analysis ---
-st.subheader("🔄 Refresh Data")
+st.subheader("Refresh Data")
 
 if st.button("Run Latest Churn Analysis"):
     from cf_buckhead_analytics.risk_scoring import run as run_risk_scoring
 
     with st.spinner("Running churn pipeline..."):
         run_risk_scoring()
-    st.success("✅ Analysis complete! Refresh the dropdown above to see new results.")
+    st.success("Analysis complete! Refresh the dropdown above to see new results.")
 
 # --- summary metrics ---
 total_members = len(df)
@@ -94,7 +94,7 @@ ax2.set_ylabel("Risk Score")
 ax2.set_title("Score Spread by Risk Category")
 st.pyplot(fig2)
 # --- Top 10 members at highest risk ---
-st.subheader("🚨 Top 10 Members at Highest Risk")
+st.subheader("Top 10 Members at Highest Risk")
 
 top10 = df.sort_values("score", ascending=False).head(10)
 

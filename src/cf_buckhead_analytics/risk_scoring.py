@@ -85,8 +85,8 @@ def run(as_of: str | None = None) -> None:
     outreach_path = reports_dir / f"top10_{as_of_date.date()}.csv"
     outreach.to_csv(outreach_path, index=False)
 
-    print(f"✅ Wrote: {scores_path}")
-    print(f"✅ Wrote: {outreach_path}")
+    print(f"Wrote: {scores_path}")
+    print(f"Wrote: {outreach_path}")
     print(scored.head())
 
 

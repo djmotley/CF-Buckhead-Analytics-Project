@@ -11,6 +11,7 @@ import seaborn as sns
 import streamlit as st
 
 from cf_buckhead_analytics import config
+from cf_buckhead_analytics.churn_regression import train_regression_model
 
 st.set_page_config(page_title="CrossFit Buckhead Member Retention", layout="wide")
 
@@ -31,6 +32,14 @@ selected_file = st.selectbox("Select score file to view:", file_names, index=len
 
 df = pd.read_csv(processed_dir / selected_file)
 st.caption(f"Currently viewing: `{selected_file}`")
+
+as_of_date: pd.Timestamp | None = None
+if selected_file.startswith("scores_") and selected_file.endswith(".csv"):
+    date_str = selected_file[len("scores_") : -len(".csv")]
+    try:
+        as_of_date = pd.to_datetime(date_str)
+    except ValueError:
+        as_of_date = None
 
 # preview
 st.dataframe(df.head())
@@ -100,3 +109,33 @@ top10 = df.sort_values("score", ascending=False).head(10)
 
 # select key columns to display
 st.dataframe(top10[["member_id", "score", "band", "days_since_last_checkin", "momentum_drop"]])
+
+# --- Churn regression model suite ---
+st.subheader("Churn Regression Model")
+as_of_param = as_of_date.date().isoformat() if isinstance(as_of_date, pd.Timestamp) else None
+
+if st.button("Train Regression Models"):
+    with st.spinner("Training churn models and selecting the best performer..."):
+        report = train_regression_model(as_of=as_of_param)
+    st.success("Model training complete.")
+
+    best = report.best_model
+
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Sample Size", report.sample_size)
+    m2.metric("Positive Rate", f"{report.positive_rate:.1%}")
+    m3.metric("Accuracy", f"{best.accuracy:.3f}")
+    m4.metric("AUC", f"{best.auc:.3f}")
+
+    st.write(f"Best model: `{best.name}`")
+
+    st.write("Confusion Matrix")
+    st.dataframe(best.confusion)
+
+    st.write("Feature Statistics")
+    st.dataframe(best.feature_stats)
+
+    st.write("Model Leaderboard (sorted by AUC)")
+    st.dataframe(report.leaderboard)
+else:
+    st.info("Click the button above to train multiple churn models and view the top performer.")

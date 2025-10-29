@@ -18,7 +18,8 @@ def build_features(as_of: pd.Timestamp | None = None) -> pd.DataFrame:
     data = load_sample_data(Path(config.RAW_SAMPLE_DIR))  # <- using Dylan's folder
 
     att = data["attendance"].copy()
-    mem = data["memberships"].copy()
+    memberships = data["memberships"].copy()
+    members = data["members"].copy()
     tx = data["transactions"].copy()
 
     # ---- Attendance-based features ----
@@ -46,14 +47,43 @@ def build_features(as_of: pd.Timestamp | None = None) -> pd.DataFrame:
     purchase_drop.name = "purchase_drop"
 
     # ---- Pending cancel flag ----
-    mem = mem.set_index("member_id")
-    pending_flag = mem["pending_cancel"].fillna(False).astype(int).rename("pending_cancel_flag")
+    memberships = memberships.set_index("member_id")
+    pending_flag = (
+        memberships["pending_cancel"].fillna(False).astype(int).rename("pending_cancel_flag")
+    )
 
     # ---- Combine all features ----
     features = pd.concat(
         [days_since_last, momentum_drop, purchase_drop, pending_flag], axis=1
     ).fillna(0)
     features.index.name = "member_id"
+
+    # ---- Membership age (days) ----
+    members = members.set_index("member_id")
+    members["joined_on"] = pd.to_datetime(members["joined_on"], errors="coerce")
+    membership_age = (as_of - members["joined_on"]).dt.days.rename("membership_age_days")
+    features = features.join(membership_age)
+
+    # ---- Attendance streak (consecutive days up to latest visit) ----
+    if not att.empty:
+        att_sorted = att.sort_values(["member_id", "date"])
+        prev_dates: pd.Series = att_sorted.groupby("member_id")["date"].shift()
+        att_sorted["prev_date"] = prev_dates
+        gap: pd.Series = att_sorted["date"] - prev_dates
+        att_sorted["gap_days"] = gap.dt.days
+        att_sorted["streak_break"] = (att_sorted["gap_days"] != 1).fillna(True).astype(int)
+        att_sorted["streak_group"] = att_sorted.groupby("member_id")["streak_break"].cumsum()
+        att_sorted["streak_length"] = (
+            att_sorted.groupby(["member_id", "streak_group"]).cumcount() + 1
+        )
+        latest_streak = att_sorted.groupby("member_id")["streak_length"].last()
+        features = features.join(latest_streak.rename("attendance_streak"))
+    else:
+        features["attendance_streak"] = 0
+
+    features["membership_age_days"] = features["membership_age_days"].fillna(0).astype("Int64")
+    features["attendance_streak"] = features["attendance_streak"].fillna(0).astype("Int64")
+
     return features.reset_index()
 
 

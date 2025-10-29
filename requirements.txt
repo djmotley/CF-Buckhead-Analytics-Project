@@ -6,7 +6,7 @@ black==25.9.0
 blinker==1.9.0
 cachetools==6.2.1
 certifi==2025.10.5
--e git+https://github.com/djmotley/CF-Buckhead-Analytics-Project.git@d86692c7c893be00ac8658313a9891491967d381#egg=cf_buckhead_analytics
+-e git+https://github.com/djmotley/CF-Buckhead-Analytics-Project.git@9613e164e588ed4ee3b04c3f345ae43a18dd77c8#egg=cf_buckhead_analytics
 cfgv==3.4.0
 charset-normalizer==3.4.4
 click==8.3.0
@@ -31,6 +31,7 @@ ipython_pygments_lexers==1.1.1
 isort==7.0.0
 jedi==0.19.2
 Jinja2==3.1.6
+joblib==1.5.2
 jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
 jupyter_client==8.6.3
@@ -75,12 +76,15 @@ referencing==0.37.0
 requests==2.32.5
 rpds-py==0.28.0
 ruff==0.14.1
+scikit-learn==1.7.2
+scipy==1.16.2
 seaborn==0.13.2
 six==1.17.0
 smmap==5.0.2
 stack-data==0.6.3
 streamlit==1.50.0
 tenacity==9.1.2
+threadpoolctl==3.6.0
 toml==0.10.2
 tornado==6.5.2
 traitlets==5.14.3

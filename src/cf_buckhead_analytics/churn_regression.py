@@ -1,175 +1,213 @@
 # src/cf_buckhead_analytics/churn_regression.py
 """
-Train churn classification models and surface the strongest performer.
+Train the churn prediction model and export outreach-ready scores.
 """
 
-from collections.abc import Sequence
-from dataclasses import dataclass
-from typing import Any
+from __future__ import annotations
 
+import argparse
+import json
+from dataclasses import dataclass
+from pathlib import Path
+
+import joblib
+import numpy as np
 import pandas as pd
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score
+from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.inspection import permutation_importance
+from sklearn.metrics import average_precision_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from .training_data import make_training_frame
+from . import config
+from .training_data import TrainingArtifacts, make_training_frame, save_training_frame
 
-FEATURE_COLUMNS: Sequence[str] = (
+NUMERIC_FEATURES = [
     "days_since_last_checkin",
-    "momentum_drop",
-    "purchase_drop",
-    "pending_cancel_flag",
-    "membership_age_days",
-    "attendance_streak",
-)
+    "attend_recent_28",
+    "attend_prior_29_84",
+    "lifetime_attend",
+    "tenure_days",
+]
+
+CATEGORICAL_FEATURES = ["tenure_bucket", "plan_norm"]
 
 
-@dataclass
-class ModelPerformance:
-    """Container describing a single model's evaluation results."""
-
-    name: str
-    estimator: Any
-    accuracy: float
-    auc: float
-    confusion: pd.DataFrame
-    feature_stats: pd.DataFrame
+@dataclass(frozen=True)
+class ModelOutputs:
+    model_path: Path
+    metadata_path: Path
+    feature_importance_path: Path
+    outreach_path: Path
 
 
-@dataclass
-class RegressionReport:
-    """Summary of the best-performing model and a leaderboard of candidates."""
+def train_gradient_boosted_model(
+    as_of: str | None = None,
+) -> tuple[TrainingArtifacts, ModelOutputs | None]:
+    artifacts: TrainingArtifacts = make_training_frame(as_of=as_of)
+    dataset = artifacts.dataset.copy()
 
-    best_model: ModelPerformance
-    leaderboard: pd.DataFrame
-    sample_size: int
-    positive_rate: float
+    if dataset.empty or dataset["churned"].sum() == 0:
+        save_training_frame(artifacts)
+        print(
+            "No positive churn labels for snapshot "
+            f"{artifacts.as_of.date()}. Skipping model training."
+        )
+        return artifacts, None
 
+    if "plan_norm" in dataset.columns:
+        plan_norm_series = dataset["plan_norm"].astype(str)
+    else:
+        plan_norm_series = pd.Series("Unknown", index=dataset.index, dtype="object")
+    dataset["plan_norm"] = plan_norm_series.fillna("Unknown").astype(str)
+    dataset = dataset[dataset["plan_norm"].str.lower() != "coach"]
+    if dataset.empty:
+        raise ValueError("No eligible records remain after filtering plan_norm == 'Coach'.")
 
-def _build_model_registry() -> dict[str, Any]:
-    """Create model definitions to evaluate."""
-    return {
-        "logistic_regression": Pipeline(
-            steps=[
-                ("scaler", StandardScaler()),
-                (
-                    "clf",
-                    LogisticRegression(
-                        max_iter=2000,
-                        class_weight="balanced",
-                        C=1.5,
-                        solver="lbfgs",
-                    ),
-                ),
-            ]
-        ),
-        "gradient_boosting": GradientBoostingClassifier(
-            random_state=42, learning_rate=0.1, n_estimators=200, max_depth=3
-        ),
-        "random_forest": RandomForestClassifier(
-            random_state=42, n_estimators=400, max_depth=6, min_samples_leaf=5
-        ),
+    if "tenure_bucket" in dataset.columns:
+        tenure_bucket_series = dataset["tenure_bucket"].astype(str)
+    else:
+        tenure_bucket_series = pd.Series("Unknown", index=dataset.index, dtype="object")
+    dataset["tenure_bucket"] = tenure_bucket_series.fillna("Unknown").astype(str)
+
+    X = dataset[NUMERIC_FEATURES + CATEGORICAL_FEATURES].copy()
+    y = dataset["churned"].astype(int)
+
+    print(f"Training samples: {len(dataset)} " f"(positive rate {float(y.mean()):.3f})")
+
+    x_train, x_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.25, stratify=y, random_state=config.RANDOM_STATE
+    )
+
+    preprocessor = ColumnTransformer(
+        [
+            ("num", StandardScaler(), NUMERIC_FEATURES),
+            ("cat", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL_FEATURES),
+        ]
+    )
+
+    model = HistGradientBoostingClassifier(random_state=config.RANDOM_STATE)
+    pipeline = Pipeline([("prep", preprocessor), ("model", model)])
+    pipeline.fit(x_train, y_train)
+
+    y_scores = pipeline.predict_proba(x_test)[:, 1]
+    pr_auc = average_precision_score(y_test, y_scores)
+
+    share = config.CHURN_TOP_SHARE
+    top_k = max(int(len(y_scores) * share), 1)
+    cutoff = np.sort(y_scores)[-top_k] if top_k < len(y_scores) else np.min(y_scores)
+    predicted_positive = y_scores >= cutoff
+
+    precision_at_share = (y_test[predicted_positive] == 1).sum() / max(predicted_positive.sum(), 1)
+    recall_at_share = (y_test[predicted_positive] == 1).sum() / max((y_test == 1).sum(), 1)
+
+    if y_test.nunique() > 1 and (y_test == 1).any():
+        perm_result = permutation_importance(
+            pipeline,
+            x_test,
+            y_test,
+            n_repeats=10,
+            random_state=config.RANDOM_STATE,
+            scoring="average_precision",
+        )
+        importance_df = pd.DataFrame(
+            {
+                "feature": NUMERIC_FEATURES + CATEGORICAL_FEATURES,
+                "importance": perm_result.importances_mean,
+                "importance_std": perm_result.importances_std,
+            }
+        ).sort_values("importance", ascending=False)
+    else:
+        importance_df = pd.DataFrame(
+            {
+                "feature": NUMERIC_FEATURES + CATEGORICAL_FEATURES,
+                "importance": 0.0,
+                "importance_std": 0.0,
+            }
+        )
+
+    model_dir = Path(config.MODELS_DIR)
+    model_dir.mkdir(parents=True, exist_ok=True)
+
+    model_path = model_dir / f"churn_model_{artifacts.as_of.date()}.pkl"
+    metadata_path = model_dir / f"model_metadata_{artifacts.as_of.date()}.json"
+    feature_importance_path = (
+        Path(config.PROCESSED_DIR) / f"feature_importance_{artifacts.as_of.date()}.csv"
+    )
+
+    joblib.dump(pipeline, model_path)
+    importance_df.to_csv(feature_importance_path, index=False)
+
+    metadata: dict[str, object] = {
+        "as_of": artifacts.as_of.date().isoformat(),
+        "n_samples": int(len(dataset)),
+        "positive_rate": float(dataset["churned"].mean()),
+        "pr_auc": float(pr_auc),
+        "precision_at_top_share": float(precision_at_share),
+        "recall_at_top_share": float(recall_at_share),
+        "top_share": config.CHURN_TOP_SHARE,
+        "numeric_features": NUMERIC_FEATURES,
+        "categorical_features": CATEGORICAL_FEATURES,
     }
+    metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
+    outreach_path = _write_outreach_scores(pipeline, dataset, artifacts.as_of)
 
-def _feature_importance_frame(estimator: Any, model_name: str) -> pd.DataFrame:
-    """Extract feature importance style statistics for a fitted estimator."""
-    feature_names = list(FEATURE_COLUMNS)
+    top_driver_rows = importance_df.head(5)
+    if not top_driver_rows.empty:
+        print("Top feature drivers:")
+        for _, row in top_driver_rows.iterrows():
+            print(f"  - {row['feature']}: {row['importance']:.4f}")
 
-    if model_name == "logistic_regression":
-        logistic = estimator.named_steps["clf"]
-        coefficients = pd.Series(logistic.coef_[0], index=feature_names)
-        ordered = coefficients.sort_values(ascending=False).to_frame(name="coefficient")
-        return pd.DataFrame(ordered)
-
-    if hasattr(estimator, "feature_importances_"):
-        importances = pd.Series(estimator.feature_importances_, index=feature_names)
-        ordered = importances.sort_values(ascending=False).to_frame(name="importance")
-        return pd.DataFrame(ordered)
-
-    # Fallback: empty dataframe when stats are not available
-    return pd.DataFrame(columns=["feature", "value"])
-
-
-def train_regression_model(as_of: str | None = None) -> RegressionReport:
-    """
-    Train several classifiers, compare accuracy/AUC, and return the top performer.
-
-    This approach typically yields stronger metrics than a single unscaled logistic
-    regression because it (a) balances classes, (b) scales numeric inputs, and
-    (c) explores boosted-tree ensembles that capture non-linear effects.
-    """
-    df = make_training_frame(as_of=as_of)
-
-    X = df[list(FEATURE_COLUMNS)]
-    y = df["churned"]
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.25, random_state=42, stratify=y
+    print(
+        f"PR-AUC: {pr_auc:.3f}; "
+        f"Precision@Top {int(config.CHURN_TOP_SHARE * 100)}%: {precision_at_share:.3f}; "
+        f"Recall@Top {int(config.CHURN_TOP_SHARE * 100)}%: {recall_at_share:.3f}; "
+        f"Saved outreach to {outreach_path}"
     )
 
-    model_registry = _build_model_registry()
-    evaluations: list[ModelPerformance] = []
+    save_training_frame(artifacts)  # persist the dataset used for modeling
 
-    for name, estimator in model_registry.items():
-        fitted = estimator.fit(X_train, y_train)
-        y_pred = fitted.predict(X_test)
-        y_proba = fitted.predict_proba(X_test)[:, 1]
-
-        acc = accuracy_score(y_test, y_pred)
-        auc = roc_auc_score(y_test, y_proba)
-        cm = confusion_matrix(y_test, y_pred)
-        cm_df = pd.DataFrame(
-            cm,
-            index=pd.Index([0, 1], name="Actual"),
-            columns=pd.Index([0, 1], name="Predicted"),
-        )
-
-        feature_stats = _feature_importance_frame(fitted, name)
-        evaluations.append(
-            ModelPerformance(
-                name=name,
-                estimator=fitted,
-                accuracy=acc,
-                auc=auc,
-                confusion=cm_df,
-                feature_stats=feature_stats,
-            )
-        )
-
-    leaderboard = pd.DataFrame(
-        {
-            "model": [result.name for result in evaluations],
-            "accuracy": [result.accuracy for result in evaluations],
-            "auc": [result.auc for result in evaluations],
-        }
-    ).sort_values(by=["auc", "accuracy"], ascending=False, ignore_index=True)
-
-    best_name = leaderboard.loc[0, "model"]
-    best_result = next(result for result in evaluations if result.name == best_name)
-
-    return RegressionReport(
-        best_model=best_result,
-        leaderboard=leaderboard,
-        sample_size=len(df),
-        positive_rate=float(y.mean()),
+    outputs = ModelOutputs(
+        model_path=model_path,
+        metadata_path=metadata_path,
+        feature_importance_path=feature_importance_path,
+        outreach_path=outreach_path,
     )
+    return artifacts, outputs
+
+
+def _write_outreach_scores(pipeline: Pipeline, dataset: pd.DataFrame, as_of: pd.Timestamp) -> Path:
+    scores = pipeline.predict_proba(dataset[NUMERIC_FEATURES + CATEGORICAL_FEATURES])[:, 1]
+    result = dataset[
+        ["member_id", "days_since_last_checkin", "attend_recent_28", "tenure_bucket", "plan_norm"]
+    ].copy()
+    result["score"] = scores
+    result = result.sort_values("score", ascending=False).head(config.OUTREACH_MAX_MEMBERS)
+    result["risk_tier"] = pd.cut(
+        result["score"],
+        bins=[-np.inf, 0.3, 0.5, 0.7, np.inf],
+        labels=["Low", "Medium", "High", "Very High"],
+    ).astype(str)
+    outreach_path = Path(config.REPORTS_OUTREACH_DIR) / f"outreach_{as_of.date()}.csv"
+    Path(config.REPORTS_OUTREACH_DIR).mkdir(parents=True, exist_ok=True)
+    result.to_csv(outreach_path, index=False)
+    return outreach_path
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Train churn model and export outreach files.")
+    parser.add_argument(
+        "--as_of",
+        type=str,
+        default=None,
+        help="Optional snapshot date (YYYY-MM-DD). Defaults to latest available <= today.",
+    )
+    args = parser.parse_args(argv)
+    train_gradient_boosted_model(as_of=args.as_of)
 
 
 if __name__ == "__main__":
-    report = train_regression_model()
-    best = report.best_model
-
-    print("Best Model:", best.name)
-    print(f"Sample size: {report.sample_size}")
-    print(f"Positive rate: {report.positive_rate:.3f}")
-    print(f"Accuracy: {best.accuracy:.3f}")
-    print(f"AUC: {best.auc:.3f}")
-    print("Confusion Matrix:\n", best.confusion)
-    print("\nFeature Statistics:")
-    print(best.feature_stats)
-    print("\nLeaderboard:")
-    print(report.leaderboard)
+    main()

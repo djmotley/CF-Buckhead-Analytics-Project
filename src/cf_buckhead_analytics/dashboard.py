@@ -1,141 +1,257 @@
 # src/cf_buckhead_analytics/dashboard.py
 """
-Streamlit dashboard for CrossFit Buckhead churn analysis.
+Streamlit dashboard for the CrossFit Buckhead churn project.
 """
 
-from pathlib import Path
+from __future__ import annotations
 
-import matplotlib.pyplot as plt
+from pathlib import Path
+from typing import Any
+
+import altair as alt
 import pandas as pd
-import seaborn as sns
 import streamlit as st
 
-from cf_buckhead_analytics import config
-from cf_buckhead_analytics.churn_regression import train_regression_model
+try:
+    from . import config
+except ImportError:  # pragma: no cover - streamlit executes file directly
+    import sys
 
-st.set_page_config(page_title="CrossFit Buckhead Member Retention", layout="wide")
+    PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+    if str(PACKAGE_ROOT) not in sys.path:
+        sys.path.append(str(PACKAGE_ROOT))
+    import cf_buckhead_analytics.config as config  # pragma: no cover
 
-st.title(" CrossFit Buckhead Member Retention Dashboard")
-st.markdown("Visual overview of member engagement and churn risk scores.")
+st.set_page_config(page_title="CrossFit Buckhead Retention", layout="wide")
+st.title("CrossFit Buckhead Retention Dashboard")
+st.caption("Monitor churn risk, understand drivers, and prioritize weekly outreach.")
 
-# --- load score files ---
-processed_dir = Path(config.PROCESSED_DIR)
-files = sorted(processed_dir.glob("scores_*.csv"))
 
-if not files:
-    st.error("No score files found. Run risk_scoring.py first to generate one.")
+def _latest_file(pattern: str, directory: Path) -> Path | None:
+    files = sorted(directory.glob(pattern))
+    return files[-1] if files else None
+
+
+def _load_feature_store() -> tuple[pd.DataFrame | None, pd.Timestamp | None, Path | None]:
+    proc_dir = Path(config.PROCESSED_DIR)
+    path = _latest_file("feature_store_*.parquet", proc_dir)
+    if not path:
+        return None, None, None
+    df = pd.read_parquet(path)
+    as_of = pd.Timestamp(path.stem.split("_")[-1])
+    return df, as_of, path
+
+
+def _load_training_dataset() -> tuple[pd.DataFrame | None, pd.Timestamp | None]:
+    proc_dir = Path(config.PROCESSED_DIR)
+    path = _latest_file("training_dataset_*.parquet", proc_dir)
+    if not path:
+        return None, None
+    df = pd.read_parquet(path)
+    as_of = pd.Timestamp(path.stem.split("_")[-1])
+    return df, as_of
+
+
+def _load_model_metadata() -> tuple[str, Path] | None:
+    metadata_files = sorted(Path(config.MODELS_DIR).glob("model_metadata_*.json"))
+    if not metadata_files:
+        return None
+    latest = metadata_files[-1]
+    return latest.read_text(encoding="utf-8"), latest
+
+
+def _parse_metadata(
+    meta_text_path: tuple[str, Path] | None
+) -> tuple[dict[str, Any] | None, Path | None]:
+    if meta_text_path is None:
+        return None, None
+    import json
+
+    text, path = meta_text_path
+    return json.loads(text), path
+
+
+def _load_feature_importance(as_of: pd.Timestamp | None) -> pd.DataFrame | None:
+    proc_dir = Path(config.PROCESSED_DIR)
+    if as_of is not None:
+        specific = proc_dir / f"feature_importance_{as_of.date()}.csv"
+        if specific.exists():
+            return pd.read_csv(specific)
+    fallback = _latest_file("feature_importance_*.csv", proc_dir)
+    if fallback:
+        return pd.read_csv(fallback)
+    return None
+
+
+def _load_outreach(as_of: pd.Timestamp | None) -> pd.DataFrame | None:
+    outreach_dir = Path(config.REPORTS_OUTREACH_DIR)
+    if as_of is not None:
+        specific = outreach_dir / f"outreach_{as_of.date()}.csv"
+        if specific.exists():
+            return pd.read_csv(specific)
+    fallback = _latest_file("outreach_*.csv", outreach_dir)
+    if fallback:
+        return pd.read_csv(fallback)
+    return None
+
+
+def _load_cohort_retention(as_of: pd.Timestamp | None) -> pd.DataFrame | None:
+    proc_dir = Path(config.PROCESSED_DIR)
+    if as_of is not None:
+        specific = proc_dir / f"cohort_retention_{as_of.date()}.csv"
+        if specific.exists():
+            return pd.read_csv(specific)
+    fallback = _latest_file("cohort_retention_*.csv", proc_dir)
+    if fallback:
+        return pd.read_csv(fallback)
+    return None
+
+
+features_df, feature_as_of, feature_path = _load_feature_store()
+training_df, training_as_of = _load_training_dataset()
+metadata_text_path = _load_model_metadata()
+metadata, metadata_path = _parse_metadata(metadata_text_path)
+importance_df = _load_feature_importance(training_as_of or feature_as_of)
+outreach_df = _load_outreach(training_as_of or feature_as_of)
+cohort_df = _load_cohort_retention(feature_as_of)
+
+if features_df is None:
+    st.warning(
+        "No feature store found. Run `python -m cf_buckhead_analytics.feature_engineering` first."
+    )
     st.stop()
 
-# dropdown for file selection
-file_names = [f.name for f in files]
-selected_file = st.selectbox("Select score file to view:", file_names, index=len(file_names) - 1)
+snapshot_ts = training_as_of or feature_as_of
+snapshot_date = snapshot_ts.date().isoformat() if snapshot_ts is not None else "N/A"
+positive_rate = (
+    float(training_df["churned"].mean())
+    if training_df is not None and not training_df.empty
+    else None
+)
+pr_auc = float(metadata["pr_auc"]) if metadata and "pr_auc" in metadata else None
+precision_at_share = (
+    float(metadata["precision_at_top_share"])
+    if metadata and "precision_at_top_share" in metadata
+    else None
+)
+recall_at_share = (
+    float(metadata["recall_at_top_share"])
+    if metadata and "recall_at_top_share" in metadata
+    else None
+)
 
-df = pd.read_csv(processed_dir / selected_file)
-st.caption(f"Currently viewing: `{selected_file}`")
-
-as_of_date: pd.Timestamp | None = None
-if selected_file.startswith("scores_") and selected_file.endswith(".csv"):
-    date_str = selected_file[len("scores_") : -len(".csv")]
-    try:
-        as_of_date = pd.to_datetime(date_str)
-    except ValueError:
-        as_of_date = None
-
-# preview
-st.dataframe(df.head())
-
-# --- refresh button to rerun analysis ---
-st.subheader("Refresh Data")
-
-if st.button("Run Latest Churn Analysis"):
-    from cf_buckhead_analytics.risk_scoring import run as run_risk_scoring
-
-    with st.spinner("Running churn pipeline..."):
-        run_risk_scoring()
-    st.success("Analysis complete! Refresh the dropdown above to see new results.")
-
-# --- summary metrics ---
-total_members = len(df)
-green_count = (df["band"] == "GREEN").sum()
-yellow_count = (df["band"] == "YELLOW").sum()
-red_count = (df["band"] == "RED").sum()
-
+st.markdown("### Snapshot KPIs")
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Total Members", total_members)
-col2.metric("Green (Healthy)", green_count)
-col3.metric("Yellow (Watch)", yellow_count)
-col4.metric("Red (At Risk)", red_count)
-
-# --- Risk score distribution (Seaborn + Matplotlib) ---
-st.subheader("Risk Score Distribution")
-
-fig, ax = plt.subplots(figsize=(8, 4))
-sns.histplot(
-    data=df,
-    x="score",
-    bins=20,
-    hue="band",
-    multiple="stack",
-    palette={"GREEN": "#2ecc71", "YELLOW": "#f1c40f", "RED": "#e74c3c"},
-    edgecolor="black",
-    ax=ax,
+col1.metric("Snapshot Date", snapshot_date)
+col2.metric("Positive Rate", f"{positive_rate:.3f}" if positive_rate is not None else "n/a")
+col3.metric(
+    f"PR-AUC",
+    f"{pr_auc:.3f}" if pr_auc is not None else "n/a",
+)
+col4.metric(
+    f"Precision@Top {int(config.CHURN_TOP_SHARE * 100)}%",
+    f"{precision_at_share:.3f}" if precision_at_share is not None else "n/a",
 )
 
-ax.set_xlabel("Churn Risk Score")
-ax.set_ylabel("Member Count")
-ax.set_title("Distribution of Member Risk Scores")
-st.pyplot(fig)
-
-# --- Boxplot by risk band ---
-st.subheader("Score Distribution by Band")
-
-fig2, ax2 = plt.subplots(figsize=(6, 4))
-sns.boxplot(
-    data=df,
-    x="band",
-    y="score",
-    order=["GREEN", "YELLOW", "RED"],
-    palette={"GREEN": "#2ecc71", "YELLOW": "#f1c40f", "RED": "#e74c3c"},
-    ax=ax2,
-)
-ax2.set_xlabel("Risk Band")
-ax2.set_ylabel("Risk Score")
-ax2.set_title("Score Spread by Risk Category")
-st.pyplot(fig2)
-# --- Top 10 members at highest risk ---
-st.subheader("Top 10 Members at Highest Risk")
-
-top10 = df.sort_values("score", ascending=False).head(10)
-
-# select key columns to display
-st.dataframe(top10[["member_id", "score", "band", "days_since_last_checkin", "momentum_drop"]])
-
-# --- Churn regression model suite ---
-st.subheader("Churn Regression Model")
-as_of_param = as_of_date.date().isoformat() if isinstance(as_of_date, pd.Timestamp) else None
-
-if st.button("Train Regression Models"):
-    with st.spinner("Training churn models and selecting the best performer..."):
-        report = train_regression_model(as_of=as_of_param)
-    st.success("Model training complete.")
-
-    best = report.best_model
-
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Sample Size", report.sample_size)
-    m2.metric("Positive Rate", f"{report.positive_rate:.1%}")
-    m3.metric("Accuracy", f"{best.accuracy:.3f}")
-    m4.metric("AUC", f"{best.auc:.3f}")
-
-    st.write(f"Best model: `{best.name}`")
-
-    st.write("Confusion Matrix")
-    st.dataframe(best.confusion)
-
-    st.write("Feature Statistics")
-    st.dataframe(best.feature_stats)
-
-    st.write("Model Leaderboard (sorted by AUC)")
-    st.dataframe(report.leaderboard)
+st.markdown("### Tenure Buckets")
+tenure_chart: alt.Chart | None
+if features_df is not None and "tenure_bucket" in features_df.columns:
+    tenure_counts = (
+        features_df["tenure_bucket"]
+        .fillna("Unknown")
+        .astype(str)
+        .value_counts()
+        .reset_index(name="members")
+        .rename(columns={"index": "tenure_bucket"})
+    )
+    tenure_chart = (
+        alt.Chart(tenure_counts)
+        .mark_bar()
+        .encode(
+            x=alt.X("members:Q", title="Members"),
+            y=alt.Y("tenure_bucket:N", title="Tenure Bucket"),
+            tooltip=["tenure_bucket", "members"],
+        )
+    )
 else:
-    st.info("Click the button above to train multiple churn models and view the top performer.")
+    tenure_chart = None
+
+if tenure_chart is not None:
+    st.altair_chart(tenure_chart, use_container_width=True)
+else:
+    st.info("Tenure buckets are unavailable for the current feature snapshot.")
+
+st.markdown("### Plan Mix")
+plan_chart: alt.Chart | None
+if features_df is not None and "plan_norm" in features_df.columns:
+    plan_counts = (
+        features_df["plan_norm"]
+        .fillna("Unknown")
+        .astype(str)
+        .value_counts()
+        .reset_index(name="members")
+        .rename(columns={"index": "plan_norm"})
+    )
+    plan_chart = (
+        alt.Chart(plan_counts)
+        .mark_bar()
+        .encode(
+            x=alt.X("members:Q", title="Members"),
+            y=alt.Y("plan_norm:N", title="Plan"),
+            tooltip=["plan_norm", "members"],
+        )
+    )
+else:
+    plan_chart = None
+
+if plan_chart is not None:
+    st.altair_chart(plan_chart, use_container_width=True)
+else:
+    st.info("Membership plan data not available; display skipped.")
+
+st.markdown("### Cohort Retention")
+if cohort_df is not None and not cohort_df.empty:
+    cohort_df["attendance_month"] = cohort_df["attendance_month"].astype(str)
+    heatmap = (
+        alt.Chart(cohort_df)
+        .mark_rect()
+        .encode(
+            x=alt.X("months_since_join:O", title="Months Since Join"),
+            y=alt.Y("cohort_month:N", title="Cohort"),
+            color=alt.Color("retention_rate:Q", title="Retention", scale=alt.Scale(scheme="blues")),
+            tooltip=["cohort_month", "attendance_month", "retention_rate"],
+        )
+    )
+    st.altair_chart(heatmap, use_container_width=True)
+else:
+    st.info("Cohort retention matrix unavailable. Will populate once enough history accrues.")
+
+st.markdown("### Outreach Shortlist")
+if outreach_df is not None and not outreach_df.empty:
+    display_cols = [
+        "member_id",
+        "score",
+        "risk_tier",
+        "days_since_last_checkin",
+        "attend_recent_28",
+        "tenure_bucket",
+        "plan_norm",
+    ]
+    available_cols = [col for col in display_cols if col in outreach_df.columns]
+    st.dataframe(outreach_df[available_cols])
+    st.download_button(
+        label="Download Outreach CSV",
+        data=outreach_df.to_csv(index=False).encode("utf-8"),
+        file_name=f"outreach_{snapshot_date}.csv",
+    )
+else:
+    st.info("Run the churn model to generate an outreach shortlist.")
+
+st.markdown("### Why These Members?")
+if importance_df is not None and not importance_df.empty:
+    top_importance = importance_df.sort_values("importance", ascending=False).head(5)[
+        ["feature", "importance"]
+    ]
+    st.table(top_importance.rename(columns={"feature": "Feature", "importance": "Importance"}))
+else:
+    st.info("Train the model to surface feature importance explanations.")

@@ -1,121 +1,197 @@
-from collections.abc import Mapping, Sequence
+# src/cf_buckhead_analytics/data_prep.py
+"""
+Data ingestion helpers that transform raw PushPress-style exports into
+normalized tables ready for feature engineering and modeling.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterable
 
 import pandas as pd
 
+from . import config
 
-def load_sample_data(raw_dir: Path = Path("data/raw_sample_dylan")) -> dict[str, pd.DataFrame]:
+
+@dataclass(frozen=True)
+class RawData:
+    """Container for cleaned attendance plus optional member metadata."""
+
+    attendance: pd.DataFrame
+    members: pd.DataFrame | None
+
+
+def load_raw_data(raw_dir: Path | None = None) -> RawData:
     """
-    Load Dylan's raw sample files from the specified directory and normalize them
-    into a consistent schema. Returns a dictionary of pandas DataFrames with keys:
-      - 'attendance': columns -> [member_id, date]
-      - 'memberships': columns -> [member_id, canceled_on, pending_cancel]
-      - 'members': columns -> [member_id, joined_on]
-      - 'transactions': columns -> [member_id, date, amount]
-    The function handles alternate column name spellings and ensures date fields
-    are converted to datetime objects and amounts to numeric values.
+    Load the raw attendance (mandatory) and member roster (optional) files.
+
+    Parameters
+    ----------
+    raw_dir:
+        Optional override for the raw directory. Defaults to config.RAW_DIR.
     """
-    # Verify the directory exists
-    if not raw_dir.exists():
-        raise FileNotFoundError(f"Data directory not found: {raw_dir}")
 
-    # Define file paths
-    attendance_file = (
-        raw_dir / "Attendance.csv"
-    )  # Note: filename as given (possible typo "Attendence")
-    cancellations_file = raw_dir / "Cancellations.csv"
-    members_file = raw_dir / "Members.csv"
-    sales_file = raw_dir / "Store_Sales.csv"
+    base_dir = Path(raw_dir) if raw_dir else Path(config.RAW_DIR)
+    if not base_dir.exists():
+        raise FileNotFoundError(f"Raw data directory not found: {base_dir}")
 
-    # Check that each expected file exists before proceeding
-    for file_path in [attendance_file, cancellations_file, members_file, sales_file]:
-        if not file_path.exists():
-            raise FileNotFoundError(f"Expected file not found: {file_path}")
+    attendance_path = base_dir / "Attendance.csv"
+    if not attendance_path.exists():
+        raise FileNotFoundError(
+            f"Required file Attendance.csv not found in {attendance_path.parent}"
+        )
 
-    # Define synonyms for column names in each file to map to internal schema
-    attendance_synonyms = {
-        "member_id": ["Member_ID", "MemberID", "member_id", "memberID"],
-        "date": ["Date", "date", "Class_Date", "AttendanceDate"],  # include plausible variants
-    }
-    cancellations_synonyms = {
-        "member_id": ["Member_ID", "MemberID", "member_id", "memberID"],
-        "canceled_on": [
-            "Cancel_Date",
-            "CancelDate",
-            "Cancelled_Date",
-            "Cancelled_On",
-            "Canceled_On",
-        ],
-        # pending_cancel is not in raw data; we'll add it manually as False for all.
-    }
-    members_synonyms = {
-        "member_id": ["Member_ID", "MemberID", "member_id", "memberID"],
-        "joined_on": ["Join_Date", "JoinDate", "Joined_On", "JoinedOn", "join_date"],
-        # We ignore First_Name, Membership_Type, Referral_Source for normalization.
-    }
-    transactions_synonyms = {
-        "member_id": ["Member_ID", "MemberID", "member_id", "memberID"],
-        "date": ["Purchase_Date", "PurchaseDate", "Date", "date"],
-        "amount": ["Amount_USD", "Amount", "amount", "Sales_Amount", "Price"],
-        # 'Item' column is ignored in the normalized transactions schema.
-    }
+    attendance = _load_attendance(attendance_path)
 
-    def _read_and_standardize(
-        file_path: Path, synonyms_map: Mapping[str, Sequence[str]], required_cols: Sequence[str]
-    ) -> pd.DataFrame:
-        """Helper to read a CSV file and rename/select columns based on the provided synonyms map."""
-        # Read the CSV into a DataFrame
-        df = pd.read_csv(file_path)
-        # Build a rename map for columns found in the DataFrame
-        rename_map: dict[str, str] = {}
-        for std_col, name_variants in synonyms_map.items():
-            for col_name in name_variants:
-                if col_name in df.columns:
-                    rename_map[col_name] = std_col
-                    break  # stop at the first match for this standard column
-        # Rename columns in the DataFrame
-        df = df.rename(columns=rename_map)
-        # Verify that all required columns are now present after renaming
-        for col in required_cols:
-            if col not in df.columns:
-                raise ValueError(
-                    f"Column '{col}' not found in {file_path.name}. "
-                    f"Available columns: {list(df.columns)}"
-                )
-        # Keep only the required columns (drop others not needed for normalization)
-        df = df[required_cols].copy()
-        return df
+    members_path = base_dir / "Members.csv"
+    members = _load_members(members_path, attendance) if members_path.exists() else None
 
-    # Load and normalize each DataFrame
-    attendance_df = _read_and_standardize(
-        attendance_file, attendance_synonyms, required_cols=["member_id", "date"]
-    )
-    memberships_df = _read_and_standardize(
-        cancellations_file, cancellations_synonyms, required_cols=["member_id", "canceled_on"]
-    )
-    members_df = _read_and_standardize(
-        members_file, members_synonyms, required_cols=["member_id", "joined_on"]
-    )
-    transactions_df = _read_and_standardize(
-        sales_file, transactions_synonyms, required_cols=["member_id", "date", "amount"]
+    return RawData(attendance=attendance, members=members)
+
+
+def ensure_directories() -> None:
+    """Create the downstream directories if they do not already exist."""
+
+    for path in (
+        config.PROCESSED_DIR,
+        config.REPORTS_OUTREACH_DIR,
+        config.MODELS_DIR,
+    ):
+        Path(path).mkdir(parents=True, exist_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+
+
+def _to_snake_case(name: str) -> str:
+    return (
+        name.replace("-", "_")
+        .replace(" ", "_")
+        .replace("/", "_")
+        .replace("__", "_")
+        .strip()
+        .lower()
     )
 
-    # Add pending_cancel column to memberships (cancellations) – set to False for all rows
-    memberships_df["pending_cancel"] = False  # boolean column
 
-    # Convert date columns to datetime objects (NaT for invalid or missing dates)
-    attendance_df["date"] = pd.to_datetime(attendance_df["date"], errors="coerce")
-    memberships_df["canceled_on"] = pd.to_datetime(memberships_df["canceled_on"], errors="coerce")
-    members_df["joined_on"] = pd.to_datetime(members_df["joined_on"], errors="coerce")
-    transactions_df["date"] = pd.to_datetime(transactions_df["date"], errors="coerce")
+def _load_attendance(path: Path) -> pd.DataFrame:
+    df = pd.read_csv(path)
 
-    # Convert amount column to numeric (float). Invalid parsing will become NaN.
-    transactions_df["amount"] = pd.to_numeric(transactions_df["amount"], errors="coerce")
+    rename_map: dict[str, str] = {}
+    for col in df.columns:
+        snake = _to_snake_case(col)
+        if snake in {"member_id", "class_ts", "class_type"}:
+            rename_map[col] = snake
+        elif snake in {"memberid", "member"}:
+            rename_map[col] = "member_id"
+        elif snake in {"datetime", "checkin_time", "check_in_time"}:
+            rename_map[col] = "class_ts"
+    df = df.rename(columns=rename_map)
 
-    # Return a dictionary of the four normalized DataFrames
-    return {
-        "attendance": attendance_df,
-        "memberships": memberships_df,
-        "members": members_df,
-        "transactions": transactions_df,
+    required = {"member_id", "class_ts"}
+    missing = required.difference(df.columns)
+    if missing:
+        raise ValueError(
+            f"Attendance file is missing required columns: {sorted(missing)}. "
+            f"Available columns: {list(df.columns)}"
+        )
+
+    df["member_id"] = df["member_id"].astype(str)
+    df["class_ts"] = pd.to_datetime(df["class_ts"], errors="coerce")
+    if df["class_ts"].isna().any():
+        df = df.dropna(subset=["class_ts"]).copy()
+
+    today = pd.Timestamp.today().normalize()
+    future_mask = df["class_ts"].dt.normalize() > today
+    if future_mask.any():
+        # shift future check-ins back to the reference day while preserving time of day
+        delta = df.loc[future_mask, "class_ts"].dt.normalize() - today
+        df.loc[future_mask, "class_ts"] = df.loc[future_mask, "class_ts"] - delta
+
+    if "class_type" not in df.columns:
+        df["class_type"] = "CrossFit"
+    df["class_type"] = df["class_type"].fillna("CrossFit")
+
+    df = df.sort_values(["member_id", "class_ts"]).reset_index(drop=True)
+    return df[["member_id", "class_ts", "class_type"]]
+
+
+def _load_members(path: Path, attendance: pd.DataFrame) -> pd.DataFrame:
+    df = pd.read_csv(path)
+    columns: pd.Index = pd.Index([_to_snake_case(col) for col in df.columns])
+    df.columns = columns
+
+    column_aliases: dict[str, Iterable[str]] = {
+        "member_id": ("member_id", "memberid", "id"),
+        "status": ("status", "membership_status"),
+        "plan": ("plan", "plan_name", "membership_type"),
+        "member_since": ("member_since", "membersince", "first_checkin", "first_seen"),
+        "plan_cancel_date": ("plan_cancel_date", "cancel_date", "plan_end_date"),
+        "plan_end_date": ("plan_end_date", "membership_end_date", "end_date"),
     }
+
+    for target, candidates in column_aliases.items():
+        if target in df.columns:
+            continue
+        for candidate in candidates:
+            if candidate in df.columns:
+                df = df.rename(columns={candidate: target})
+                break
+
+    if "member_id" not in df.columns:
+        raise ValueError("Members.csv must contain a member_id column.")
+
+    df["member_id"] = df["member_id"].astype(str)
+
+    for date_col in ("member_since", "plan_cancel_date", "plan_end_date"):
+        if date_col in df.columns:
+            df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+        else:
+            df[date_col] = pd.NaT
+
+    attendance_first_seen = (
+        attendance.groupby("member_id")["class_ts"].min().rename("attendance_first_seen")
+    )
+    df = df.merge(attendance_first_seen, on="member_id", how="left")
+    df["member_since"] = df["member_since"].fillna(df["attendance_first_seen"])
+    df = df.drop(columns=["attendance_first_seen"])
+
+    missing_member_since = df["member_since"].isna()
+    if missing_member_since.any():
+        df.loc[missing_member_since, "member_since"] = df.loc[
+            missing_member_since, "plan_cancel_date"
+        ]
+
+    end_missing = df["plan_end_date"].isna() & df["plan_cancel_date"].notna()
+    df.loc[end_missing, "plan_end_date"] = df.loc[end_missing, "plan_cancel_date"]
+
+    if "status" in df.columns:
+        status_series = df["status"]
+    else:
+        status_series = pd.Series("", index=df.index, dtype="object")
+    df["status"] = status_series.fillna("").astype(str)
+
+    if "plan" in df.columns:
+        plan_series = df["plan"]
+    else:
+        plan_series = pd.Series("", index=df.index, dtype="object")
+    df["plan"] = plan_series.fillna("").astype(str)
+
+    df = df.sort_values(
+        ["member_id", "plan_end_date", "plan_cancel_date", "member_since"],
+        ascending=[True, True, True, True],
+    ).drop_duplicates("member_id", keep="last")
+
+    return df[
+        [
+            "member_id",
+            "status",
+            "plan",
+            "member_since",
+            "plan_cancel_date",
+            "plan_end_date",
+        ]
+    ]

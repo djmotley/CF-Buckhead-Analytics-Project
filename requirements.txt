@@ -6,7 +6,6 @@ black==25.9.0
 blinker==1.9.0
 cachetools==6.2.1
 certifi==2025.10.5
--e git+https://github.com/djmotley/CF-Buckhead-Analytics-Project.git@9613e164e588ed4ee3b04c3f345ae43a18dd77c8#egg=cf_buckhead_analytics
 cfgv==3.4.0
 charset-normalizer==3.4.4
 click==8.3.0

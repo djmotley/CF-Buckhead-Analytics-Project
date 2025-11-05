@@ -22,6 +22,8 @@ except ImportError:  # pragma: no cover - streamlit executes file directly
         sys.path.append(str(PACKAGE_ROOT))
     import cf_buckhead_analytics.config as config  # pragma: no cover
 
+EXAMPLE_DATA_DIR = Path("data/example_data")
+
 
 def _latest_file(pattern: str, directory: Path) -> Path | None:
     files = sorted(directory.glob(pattern))
@@ -29,18 +31,20 @@ def _latest_file(pattern: str, directory: Path) -> Path | None:
 
 
 def _load_feature_store() -> tuple[pd.DataFrame | None, pd.Timestamp | None, Path | None]:
-    proc_dir = Path(config.PROCESSED_DIR)
-    path = _latest_file("feature_store_*.parquet", proc_dir)
+    path = _latest_file("feature_store_*.parquet", EXAMPLE_DATA_DIR)
     if not path:
-        return None, None, None
-    df = pd.read_parquet(path)
+        path = _latest_file("feature_store_*.csv", EXAMPLE_DATA_DIR)
+        if not path:
+            return None, None, None
+        df = pd.read_csv(path)
+    else:
+        df = pd.read_parquet(path)
     as_of = pd.Timestamp(path.stem.split("_")[-1])
     return df, as_of, path
 
 
 def _load_training_dataset() -> tuple[pd.DataFrame | None, pd.Timestamp | None]:
-    proc_dir = Path(config.PROCESSED_DIR)
-    path = _latest_file("training_dataset_*.parquet", proc_dir)
+    path = _latest_file("training_dataset_*.parquet", EXAMPLE_DATA_DIR)
     if not path:
         return None, None
     df = pd.read_parquet(path)
@@ -49,7 +53,7 @@ def _load_training_dataset() -> tuple[pd.DataFrame | None, pd.Timestamp | None]:
 
 
 def _load_model_metadata() -> tuple[str, Path] | None:
-    metadata_files = sorted(Path(config.MODELS_DIR).glob("model_metadata_*.json"))
+    metadata_files = sorted(EXAMPLE_DATA_DIR.glob("model_metadata_*.json"))
     if not metadata_files:
         return None
     latest = metadata_files[-1]
@@ -68,36 +72,33 @@ def _parse_metadata(
 
 
 def _load_feature_importance(as_of: pd.Timestamp | None) -> pd.DataFrame | None:
-    proc_dir = Path(config.PROCESSED_DIR)
     if as_of is not None:
-        specific = proc_dir / f"feature_importance_{as_of.date()}.csv"
+        specific = EXAMPLE_DATA_DIR / f"feature_importance_{as_of.date()}.csv"
         if specific.exists():
             return pd.read_csv(specific)
-    fallback = _latest_file("feature_importance_*.csv", proc_dir)
+    fallback = _latest_file("feature_importance_*.csv", EXAMPLE_DATA_DIR)
     if fallback:
         return pd.read_csv(fallback)
     return None
 
 
 def _load_outreach(as_of: pd.Timestamp | None) -> pd.DataFrame | None:
-    outreach_dir = Path(config.REPORTS_OUTREACH_DIR)
     if as_of is not None:
-        specific = outreach_dir / f"outreach_{as_of.date()}.csv"
+        specific = EXAMPLE_DATA_DIR / f"outreach_{as_of.date()}.csv"
         if specific.exists():
             return pd.read_csv(specific)
-    fallback = _latest_file("outreach_*.csv", outreach_dir)
+    fallback = _latest_file("outreach_*.csv", EXAMPLE_DATA_DIR)
     if fallback:
         return pd.read_csv(fallback)
     return None
 
 
 def _load_cohort_retention(as_of: pd.Timestamp | None) -> pd.DataFrame | None:
-    proc_dir = Path(config.PROCESSED_DIR)
     if as_of is not None:
-        specific = proc_dir / f"cohort_retention_{as_of.date()}.csv"
+        specific = EXAMPLE_DATA_DIR / f"cohort_retention_{as_of.date()}.csv"
         if specific.exists():
             return pd.read_csv(specific)
-    fallback = _latest_file("cohort_retention_*.csv", proc_dir)
+    fallback = _latest_file("cohort_retention_*.csv", EXAMPLE_DATA_DIR)
     if fallback:
         return pd.read_csv(fallback)
     return None

@@ -56,3 +56,5 @@ models/
 # Outreach reports + figures (will be regenerated)
 reports/outreach/
 reports/figures/
+
+!data/example_data/

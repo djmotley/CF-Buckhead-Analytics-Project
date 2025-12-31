@@ -6,6 +6,7 @@ normalized tables ready for feature engineering and modeling.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -17,10 +18,41 @@ from . import config
 
 @dataclass(frozen=True)
 class RawData:
-    """Container for cleaned attendance plus optional member metadata."""
+    """Container for cleaned attendance plus optional membership metadata."""
 
     attendance: pd.DataFrame
-    members: pd.DataFrame | None
+    memberships: pd.DataFrame | None
+
+
+def normalize_plan(plan: str | float | None) -> str:
+    """Map free-form plan names into standard buckets."""
+    if plan is None or (isinstance(plan, float) and pd.isna(plan)):
+        return "Other"
+    text = str(plan).strip().lower()
+    if not text or text in {"nan", "none"}:
+        return "Other"
+
+    if text in {"coach", "staff", "vip staff"}:
+        return "Coach/Staff"
+
+    if "unlimited" in text or "$149/month: unlimited" in text or "$189/month: unlimited" in text:
+        return "Unlimited"
+    if "vip" in text and "coach" not in text:
+        return "Unlimited"
+
+    limited_tokens = [
+        "/month",
+        "x/month",
+        "classes / month",
+        "5x",
+        "6x",
+        "8x",
+        "12x",
+    ]
+    if any(token in text for token in limited_tokens) or re.search(r"\b\d+\s*x\b", text):
+        return "Limited"
+
+    return "Other"
 
 
 def load_raw_data(raw_dir: Path | None = None) -> RawData:
@@ -46,9 +78,9 @@ def load_raw_data(raw_dir: Path | None = None) -> RawData:
     attendance = _load_attendance(attendance_path)
 
     members_path = base_dir / "Members.csv"
-    members = _load_members(members_path, attendance) if members_path.exists() else None
+    memberships = _load_memberships(members_path, attendance) if members_path.exists() else None
 
-    return RawData(attendance=attendance, members=members)
+    return RawData(attendance=attendance, memberships=memberships)
 
 
 def ensure_directories() -> None:
@@ -119,7 +151,7 @@ def _load_attendance(path: Path) -> pd.DataFrame:
     return df[["member_id", "class_ts", "class_type"]]
 
 
-def _load_members(path: Path, attendance: pd.DataFrame) -> pd.DataFrame:
+def _load_memberships(path: Path, attendance: pd.DataFrame) -> pd.DataFrame:
     df = pd.read_csv(path)
     columns: pd.Index = pd.Index([_to_snake_case(col) for col in df.columns])
     df.columns = columns
@@ -131,6 +163,8 @@ def _load_members(path: Path, attendance: pd.DataFrame) -> pd.DataFrame:
         "member_since": ("member_since", "membersince", "first_checkin", "first_seen"),
         "plan_cancel_date": ("plan_cancel_date", "cancel_date", "plan_end_date"),
         "plan_end_date": ("plan_end_date", "membership_end_date", "end_date"),
+        "first_name": ("first_name", "firstname", "first"),
+        "last_name": ("last_name", "lastname", "last"),
     }
 
     for target, candidates in column_aliases.items():
@@ -146,11 +180,46 @@ def _load_members(path: Path, attendance: pd.DataFrame) -> pd.DataFrame:
 
     df["member_id"] = df["member_id"].astype(str)
 
-    for date_col in ("member_since", "plan_cancel_date", "plan_end_date"):
-        if date_col in df.columns:
-            df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-        else:
-            df[date_col] = pd.NaT
+    member_since_raw = df.get("member_since")
+    if member_since_raw is not None:
+        df["member_since"] = pd.to_datetime(member_since_raw, errors="coerce")
+    else:
+        df["member_since"] = pd.NaT
+
+    plan_cancel_raw = df.get("plan_cancel_date")
+    if plan_cancel_raw is None:
+        plan_cancel_raw = df.get("plancanceldate")
+    if plan_cancel_raw is not None:
+        df["plan_cancel_date"] = pd.to_datetime(plan_cancel_raw, errors="coerce")
+    else:
+        df["plan_cancel_date"] = pd.NaT
+
+    plan_end_raw = df.get("plan_end_date")
+    if plan_end_raw is None:
+        plan_end_raw = df.get("planenddate")
+    if plan_end_raw is not None:
+        df["plan_end_date"] = pd.to_datetime(plan_end_raw, errors="coerce")
+    else:
+        df["plan_end_date"] = pd.NaT
+
+    status_raw = df.get("status")
+    if status_raw is not None:
+        status_series = status_raw.fillna("").astype(str).str.lower()
+    else:
+        status_series = pd.Series("", index=df.index, dtype="object")
+    df["status"] = status_series
+
+    plan_raw = df.get("plan")
+    if plan_raw is not None:
+        plan_series = plan_raw.fillna("").astype(str)
+    else:
+        plan_series = pd.Series("", index=df.index, dtype="object")
+    df["plan"] = plan_series
+    df["plan_norm"] = plan_series.apply(normalize_plan)
+    df["first_name"] = df.get("first_name", pd.Series("", index=df.index, dtype="object")).fillna(
+        ""
+    )
+    df["last_name"] = df.get("last_name", pd.Series("", index=df.index, dtype="object")).fillna("")
 
     attendance_first_seen = (
         attendance.groupby("member_id")["class_ts"].min().rename("attendance_first_seen")
@@ -158,27 +227,6 @@ def _load_members(path: Path, attendance: pd.DataFrame) -> pd.DataFrame:
     df = df.merge(attendance_first_seen, on="member_id", how="left")
     df["member_since"] = df["member_since"].fillna(df["attendance_first_seen"])
     df = df.drop(columns=["attendance_first_seen"])
-
-    missing_member_since = df["member_since"].isna()
-    if missing_member_since.any():
-        df.loc[missing_member_since, "member_since"] = df.loc[
-            missing_member_since, "plan_cancel_date"
-        ]
-
-    end_missing = df["plan_end_date"].isna() & df["plan_cancel_date"].notna()
-    df.loc[end_missing, "plan_end_date"] = df.loc[end_missing, "plan_cancel_date"]
-
-    if "status" in df.columns:
-        status_series = df["status"]
-    else:
-        status_series = pd.Series("", index=df.index, dtype="object")
-    df["status"] = status_series.fillna("").astype(str)
-
-    if "plan" in df.columns:
-        plan_series = df["plan"]
-    else:
-        plan_series = pd.Series("", index=df.index, dtype="object")
-    df["plan"] = plan_series.fillna("").astype(str)
 
     df = df.sort_values(
         ["member_id", "plan_end_date", "plan_cancel_date", "member_since"],
@@ -189,9 +237,12 @@ def _load_members(path: Path, attendance: pd.DataFrame) -> pd.DataFrame:
         [
             "member_id",
             "status",
+            "first_name",
+            "last_name",
             "plan",
-            "member_since",
+            "plan_norm",
             "plan_cancel_date",
             "plan_end_date",
+            "member_since",
         ]
     ]

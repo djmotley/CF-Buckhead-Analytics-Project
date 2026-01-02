@@ -1,22 +1,22 @@
 .PHONY: setup fmt lint test cov
 
 setup:
-\tpyenv local 3.13.9
-\tpython -m venv .venv
-\t. .venv/bin/activate && pip install -U pip && pip install -e ".[dev]"
-\tpre-commit install
+	pyenv local 3.13.9
+	python -m venv .venv
+	. .venv/bin/activate && pip install -U pip && pip install -e ".[dev]"
+	pre-commit install
 
 fmt:
-\tblack .
-\truff format .
-\tisort .
+	black .
+	ruff format .
+	isort .
 
 lint:
-\truff check .
-\tmypy src
+	ruff check .
+	mypy src
 
 test:
-\tpytest
+	pytest
 
 cov:
-\tpytest --cov=cf_buckhead_analytics --cov-report=html
+	pytest --cov=cf_buckhead_analytics --cov-report=html

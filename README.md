@@ -31,7 +31,7 @@ For a small, membership-based business, churn has an outsized impact. Acquiring 
 Starting this project was overwhelming. I was balancing GMAT preparation, work, training, and volunteering—all while learning an entirely new technical domain. With guidance from a mentor and AI-assisted tools, I established a foundation and iterated from there.
 
 ### Leveraging AI as a Learning Accelerator
-AI tools like GitHub Copilot played a significant role in:
+AI tools like GitHub Copilot and ChatGPT Codex played a significant role in:
 - Drafting notebook structures
 - Debugging errors and edge cases
 - Understanding analytics workflows

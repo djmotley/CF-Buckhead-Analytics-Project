@@ -9,20 +9,20 @@
 
 ## Prologue: Why I Started
 
-For a long time, I struggled to find a clear starting point for my career. I wanted to commit to something I genuinely believed in, and that ultimately led me to data analytics. This project began as a personal litmus test to answer one honest question:
-**Do I actually enjoy the work that data analysts do?**
+For a long time, I struggled to find a clear starting point for my career. I wanted to commit to something I genuinely enjoyed doing, and that ultimately led me to data analytics. This project began as a personal litmus test to answer one honest question:
+**Do I actually enjoy the work that business analysts do?**
 
-Rather than guessing, I decided to build something real. I chose a real-world business problem, real constraints, and real ambiguity to immerse myself in the work. The result was one of the most challenging and rewarding learning experiences I’ve had—and it confirmed that this is the career path I want to pursue.
+Rather than guessing, I decided try and replicate the work real business analysts do. I chose a real-world business problem with real constraints and real ambiguity. The result was one of the most challenging and rewarding learning experiences I’ve had, which helped confirm that this is the career path I want to pursue.
 
 ---
 
 ## Defining the Problem
 
-The business I chose was **CrossFit Buckhead**, a gym I’m a member of and previously coached at. After meeting with the owner, one issue stood out clearly:
+The business I chose was **CrossFit Buckhead**, a gym I’m a member of and previously coached at. After meeting with the owner and listening to her pain points, one  stood out clearly:
 **Member churn.**
 
 For a small, membership-based business, churn has an outsized impact. Acquiring new members is expensive, while retaining existing ones is far more sustainable. This project aimed to answer a core question:
-**Can data help us understand why members leave—and how CrossFit Buckhead might retain them more effectively?**
+**Can data help us understand why members leave and how to retain them more effectively?**
 
 ---
 
@@ -70,10 +70,10 @@ I built a **Streamlit dashboard** to visualize engagement patterns and churn-rel
 This project taught me far more than technical skills:
 - **Asking the right questions** matters more than writing perfect code.
 - Simpler, interpretable models often provide more business value.
-- Real data introduces complexity that cannot be ignored.
+- Real data introduces problems that cannot be ignored.
 - Tools (including AI) are most powerful when used thoughtfully.
 
-Most importantly, I discovered that I enjoy the ambiguity, problem-solving, and communication required in analytics.
+Most importantly, I discovered that I enjoy the ambiguity, problem-solving, and communication inherent in business analytics.
 
 ---
 

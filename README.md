@@ -126,7 +126,6 @@ CF-Buckhead-Analytics-Project/
 - **Dylan Alexander:** For mentorship, technical guidance, and patience
 - **Alison Giannavola (CrossFit Buckhead Owner):** For trust, access, and support
 - **Carl Gold:** For inspiration and insights on churn analytics
-- **Open-source Contributors:** For tools and resources that made this project possible
 
 ---
 

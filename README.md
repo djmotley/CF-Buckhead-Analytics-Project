@@ -1,4 +1,4 @@
-# Fighting Member Churn with Data Analytics
+# Fighting Member Churn with Data
 
 **An Aspiring Analyst’s Journey to Solving Real Business Problems at CrossFit Buckhead**
 

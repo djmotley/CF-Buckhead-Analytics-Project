@@ -40,21 +40,3 @@ pythonenv*
 
 # Local data
 *.sqlite*
-
-# ------------------------
-# Project Artifact Outputs
-# ------------------------
-
-# Raw + processed data artifacts (not version-controlled)
-data/raw/
-data/processed/
-data/archive/
-
-# Model artifacts (will be regenerated)
-models/
-
-# Outreach reports + figures (will be regenerated)
-reports/outreach/
-reports/figures/
-
-!data/example_data/

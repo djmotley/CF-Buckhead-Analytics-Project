@@ -164,7 +164,7 @@ def run_dashboard_app() -> None:
                 ],
             )
         )
-        st.altair_chart(chart, use_container_width=True)
+        st.altair_chart(chart, width="stretch")
 
     st.markdown("### Outreach List")
     if outreach_df is None or outreach_df.empty:
@@ -184,7 +184,7 @@ def run_dashboard_app() -> None:
             "plan_norm",
         ]
         available = [col for col in columns if col in outreach_df.columns]
-        st.dataframe(outreach_df[available], use_container_width=True)
+        st.dataframe(outreach_df[available], width="stretch")
         csv_data = outreach_df.to_csv(index=False)
         st.download_button(
             label="Download Outreach CSV",

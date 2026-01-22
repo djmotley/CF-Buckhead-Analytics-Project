@@ -9,7 +9,7 @@
 
 ## Prologue: Why I Started
 
-For a long time, I struggled to find a clear starting point for my career. I wanted to commit to something I genuinely enjoyed doing, and that ultimately led me to data analytics. This project began as a personal litmus test to answer one honest question:
+For a long time, I struggled to find a clear starting point for my career. I wanted to commit to something I genuinely enjoyed doing, and that ultimately led me to business analytics. This project began as a personal litmus test to answer one honest question:
 **Do I actually enjoy the work that business analysts do?**
 
 Rather than guessing, I decided try and replicate the work real business analysts do. I chose a real-world business problem with real constraints and real ambiguity. The result was one of the most challenging and rewarding learning experiences I’ve had, which helped confirm that this is the career path I want to pursue.

@@ -2,7 +2,7 @@
 
 **An Aspiring Analyst’s Journey to Solving Real Business Problems at CrossFit Buckhead**
 
-🔴 **Live Dashboard (in progress):**
+🔴 **Live Dashboard:**
 [https://cf-buckhead-analytics-project.streamlit.app/](https://cf-buckhead-analytics-project.streamlit.app/)
 
 ---

@@ -12,15 +12,17 @@
 For a long time, I struggled to find a clear starting point for my career. I wanted to commit to something I genuinely enjoyed doing, and that ultimately led me to business analytics. This project began as a personal litmus test to answer one honest question:
 **Do I actually enjoy the work that business analysts do?**
 
-Rather than guessing, I decided to try to replicate the work real business analysts do. I chose a real-world business problem with real constraints and real ambiguity. The result was one of the most challenging and rewarding learning experiences I’ve had, which helped confirm that this is the career path I want to pursue.
+Rather than guessing, I decided to replicate the kind of work real business analysts face on a day-to-day basis. I chose a real-world business problem with real constraints and real ambiguity. The result was one of the most challenging and rewarding learning experiences I’ve had, which helped confirm that this is the career path I want to pursue.
 
-In addition to self-discovery, I wanted to find a way to give back to CrossFit Buckhead, a community that has given me so much since my move to Atlanta. Although the result was not as earth-shattering as I wanted, much insight was gained, and many thought-provoking questions were raised.
+Beyond self-discovery, I wanted to find a way to give back to **CrossFit Buckhead**, a community that has given me so much since my move to Atlanta. Although the results were not as earth-shattering as I had initially hoped, the project generated meaningful insights and surfaced many thought-provoking questions.
 
 ---
 
 ## Defining the Problem
 
-The business I chose was **CrossFit Buckhead**, a gym I’m a member of and previously coached at. After meeting with the owner and listening to her pain points, one issue stood out clearly:
+Before meeting with the owner of CrossFit Buckhead, I researched common challenges faced by CrossFit gyms and other membership-based fitness businesses alike. Specifically, I targeted those challenges that could be addressed through Data Analytics.
+
+After exploring potential use cases, I met with the owner to hear her perspective and better understand her pain points. After our conversation, one issue stood out clearly:
 **Member churn.**
 
 For a small, membership-based business, churn has an outsized impact. Acquiring new members is expensive, while retaining existing ones is far more sustainable. This project aimed to answer a core question:
@@ -88,9 +90,8 @@ Most importantly, I discovered that I enjoy the ambiguity, problem-solving, and 
 
 ### Improvements Moving Forward
 - Refining churn definitions and labeling logic
-- Improving feature engineering (e.g., tenure normalization, engagement decay)
-- Optimizing dashboard performance and data pipelines
-- Adding clearer, business-oriented visualizations
+- Improve feature engineering for stronger churn predictors
+- Optimizing data pipelines
 
 ---
 

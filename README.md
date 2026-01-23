@@ -141,8 +141,9 @@ CF-Buckhead-Analytics-Project/
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/CF-Buckhead-Analytics-Project.git
+   git clone https://github.com/djmotley/CF-Buckhead-Analytics-Project.git
    cd CF-Buckhead-Analytics-Project
+   git checkout Final-Branch
    ```
 
 2. Install dependencies:
@@ -152,15 +153,15 @@ CF-Buckhead-Analytics-Project/
 
 3. Run the pipeline:
    ```bash
-   python -m src.data_prep
-   python -m src.feature_engineering
-   python -m src.training_data
-   python -m src.churn_regression
+   python -m cf_buckhead_analytics.data_prep
+   python -m cf_buckhead_analytics.feature_engineering
+   python -m cf_buckhead_analytics.training_data
+   python -m cf_buckhead_analytics.churn_regression
    ```
 
 4. Launch the dashboard:
    ```bash
-   streamlit run src/dashboard.py
+   streamlit run app.py
    ```
 
 ---

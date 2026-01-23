@@ -177,7 +177,7 @@ def run_dashboard_app() -> None:
         tenure_chart = None
 
     if tenure_chart is not None:
-        st.altair_chart(tenure_chart, width="stretch")
+        st.altair_chart(tenure_chart, use_container_width=True)
     else:
         st.info("Tenure buckets are unavailable for the current feature snapshot.")
 
@@ -205,7 +205,7 @@ def run_dashboard_app() -> None:
         plan_chart = None
 
     if plan_chart is not None:
-        st.altair_chart(plan_chart, width="stretch")
+        st.altair_chart(plan_chart, use_container_width=True)
     else:
         st.info("Membership plan data not available; display skipped.")
 
@@ -224,7 +224,7 @@ def run_dashboard_app() -> None:
                 tooltip=["cohort_month", "attendance_month", "retention_rate"],
             )
         )
-        st.altair_chart(heatmap, width="stretch")
+        st.altair_chart(heatmap, use_container_width=True)
     else:
         st.info("Cohort retention matrix unavailable. Will populate once enough history accrues.")
 
@@ -240,7 +240,7 @@ def run_dashboard_app() -> None:
             "plan_norm",
         ]
         available_cols = [col for col in display_cols if col in outreach_df.columns]
-        st.dataframe(outreach_df[available_cols], width="stretch")
+        st.dataframe(outreach_df[available_cols], use_container_width=True)
         st.download_button(
             label="Download Outreach CSV",
             data=outreach_df.to_csv(index=False).encode("utf-8"),

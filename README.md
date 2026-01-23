@@ -12,7 +12,7 @@
 For a long time, I struggled to find a clear starting point for my career. I wanted to commit to something I genuinely enjoyed doing, and that ultimately led me to business analytics. This project began as a personal litmus test to answer one honest question:
 **Do I actually enjoy the work that business analysts do?**
 
-Rather than guessing, I decided to replicate the kind of work real business analysts face on a day-to-day basis. I chose a real-world business problem with real constraints and real ambiguity. The result was one of the most challenging and rewarding learning experiences I’ve had, which helped confirm that this is the career path I want to pursue.
+Rather than guessing, I attempted to replicate the day-to-day work of a real business analyst. I chose a real-world business problem with real constraints and real ambiguity. The result was one of the most challenging and rewarding learning experiences I’ve had, which helped confirm that this is the career path I want to pursue.
 
 Beyond self-discovery, I wanted to find a way to give back to **CrossFit Buckhead**, a community that has given me so much since my move to Atlanta. Although the results were not as earth-shattering as I had initially hoped, the project generated meaningful insights and surfaced many thought-provoking questions.
 
@@ -32,7 +32,7 @@ For a small, membership-based business, churn has an outsized impact. Acquiring 
 
 ## The Challenge and My Starting Point
 
-Starting this project was overwhelming. I was balancing GMAT preparation, work, training, and volunteering—all while learning an entirely new technical domain. I began my researching membership-based fitness businesses, the general construction of data analytics projects, and the concept of churn. With guidance from a mentor and AI-assisted tools, I established a foundation and iterated from there.
+Starting this project was overwhelming. I was balancing GMAT preparation, work, training, and volunteering—all while learning an entirely new technical domain. I began researching membership-based fitness businesses, the general construction of data analytics projects, and the concept of churn. With guidance from a mentor and AI-assisted tools, I established a foundation and iterated from there.
 
 ### Laying the Foundation: Research & Learning Inputs
 Before building the project in Visual Studio Code, I spent time understanding how churn is approached in practice—both from a business and analytical perspective. The following resources helped shape my thinking, feature selection, and modeling choices. In addition, they taught me how to navigate the tools I needed to make this project whole
@@ -59,7 +59,7 @@ Before building the project in Visual Studio Code, I spent time understanding ho
 
 
 ### Leveraging AI as a Learning Accelerator
-Given my current skill level, I decided to leverage AI in the construction of this project. However, I made it a point to use it thoughtfully as a learning accelerator, rather than solely relying on it to do all the work for me. While AI helped close technical gaps, it did not have the business conversations for me, make formatting decisions, and never had the last say. Tools like GitHub Copilot and ChatGPT Codex were instrumental in:
+Given my current skill level, I strategically leveraged AI as a learning accelerator, rather than relying on it to do the work for me. While AI helped close technical gaps, it did not have the critical business conversations for me and never had the final say. Tools like GitHub Copilot and ChatGPT Codex were instrumental in:
 
 - Drafting notebook structures
 - Debugging errors and edge cases
@@ -98,9 +98,9 @@ I built a **Streamlit dashboard** to visualize engagement patterns and churn-rel
 
 This project taught me far more than technical skills:
 - **Asking the right questions** matters more than writing perfect code.
-- Simpler, interpretable models often provide more business value.
-- Real data introduces problems that cannot be ignored.
-- Tools (including AI) are most powerful when used thoughtfully.
+- **Simpler, interpretable models** often provide more business value.
+- **Real data introduces problems** that cannot be ignored.
+- Tools (including AI) are **most powerful when** used **thoughtfully**.
 
 Most importantly, I discovered that I enjoy the ambiguity, problem-solving, and communication inherent in business analytics.
 
@@ -114,9 +114,9 @@ Most importantly, I discovered that I enjoy the ambiguity, problem-solving, and 
 - A live dashboard with clear, actionable insights
 
 ### Improvements Moving Forward
-- Refining churn definitions and labeling logic
+- Refine churn definitions and labeling logic
 - Improve feature engineering for stronger churn predictors
-- Optimizing data pipelines
+- Optimize data pipelines
 
 ---
 
@@ -158,7 +158,7 @@ CF-Buckhead-Analytics-Project/
 
 ---
 
-## Acknowledgments
+## Special Thank Yous To:
 
 - **Dylan Alexander:** For mentorship, technical guidance, and patience
 - **Alison Giannavola (CrossFit Buckhead Owner):** For trust, access, and support
@@ -168,6 +168,11 @@ CF-Buckhead-Analytics-Project/
 
 ## How to Reproduce
 
+#### Prerequisites
+- Python 3.9 or higher
+- pip (Python package manager)
+- A virtual environment to isolate project dependencies (optional)
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/djmotley/CF-Buckhead-Analytics-Project.git
@@ -175,12 +180,19 @@ CF-Buckhead-Analytics-Project/
    git checkout Final-Branch
    ```
 
-2. Install dependencies:
+2. (Optional) Set up a virtual environment:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate      # Mac/Linux
+    venv\Scripts\activate         # Windows
+    ```
+    
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. (Optional) Run the pipeline:
+4. (Optional) Run the pipeline:
    ```bash
    python -m cf_buckhead_analytics.data_prep
    python -m cf_buckhead_analytics.feature_engineering
@@ -188,11 +200,11 @@ CF-Buckhead-Analytics-Project/
    python -m cf_buckhead_analytics.churn_regression
    ```
 
-4. Launch the dashboard:
+5. Launch the dashboard:
    ```bash
    streamlit run app.py
    ```
 
 ---
 
-This project is a living document, reflecting my growth as an aspiring business analyst. Every iteration represents a new skill learned, a limitation discovered, or a better question asked.
+### This project is a living document, reflecting my growth as an aspiring business analyst. Every iteration represents a new skill learned, a limitation discovered, or a better question asked.

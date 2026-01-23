@@ -14,7 +14,7 @@ For a long time, I struggled to find a clear starting point for my career. I wan
 
 Rather than guessing, I decided to try to replicate the work real business analysts do. I chose a real-world business problem with real constraints and real ambiguity. The result was one of the most challenging and rewarding learning experiences I’ve had, which helped confirm that this is the career path I want to pursue.
 
-In addition to self-discovery, I wanted to find a way to give back to CrossFit Buckhead, a community that has given me so much since my move to Atlanta. Although the result was not as earth-shattering as I wanted it to be, the insights gained provoke thoughtful questions.
+In addition to self-discovery, I wanted to find a way to give back to CrossFit Buckhead, a community that has given me so much since my move to Atlanta. Although the result was not as earth-shattering as I wanted, much insight was gained, and many thought-provoking questions were raised.
 
 ---
 

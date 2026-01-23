@@ -101,28 +101,28 @@ Most importantly, I discovered that I enjoy the ambiguity, problem-solving, and 
 ### Project Structure
 ```
 CF-Buckhead-Analytics-Project/
-├── .vscode/                         # Editor configuration
-├── data/                            # Project datasets (raw, cleaned, and intermediate)
-├── models/                          # Saved models and model artifacts
+├── .vscode/                                     # Editor configuration
+├── data/                                        # Project datasets (raw, cleaned, and intermediate)
+├── models/                                      # Saved models and model artifacts
 ├── reports/
-│   └── outreach/                    # Generated outreach lists and reporting outputs
+│   └── outreach/                                # Generated outreach lists and reporting outputs
 ├── src/
-│   └── cf_buckhead_analytics/       # Core analytics package
+│   └── cf_buckhead_analytics/                   # Core analytics package
 │       ├── __init__.py
-│       ├── data_prep.py             # Data ingestion and cleaning logic
-│       ├── feature_engineering.py   # Feature engineering pipelines
-│       ├── training_data.py         # Training dataset creation and labeling
-│       ├── churn_regression.py      # Churn model training and evaluation
-│       └── utils.py                 # Shared helper functions
-├── tests/                           # Unit and integration tests
-├── app.py                           # Streamlit application entry point
-├── Project Introduction Meeting_CFB-AP.pdf  # Project background and stakeholder context
-├── README.md                        # Project overview and documentation
-├── requirements.txt                # Python dependencies
-├── pyproject.toml                  # Project configuration and tooling
-├── Makefile                        # Common development commands
-├── .pre-commit-config.yaml         # Code quality and formatting hooks
-├── .editorconfig                   # Editor formatting standards
+│       ├── data_prep.py                         # Data ingestion and cleaning logic
+│       ├── feature_engineering.py               # Feature engineering pipelines
+│       ├── training_data.py                     # Training dataset creation and labeling
+│       ├── churn_regression.py                  # Churn model training and evaluation
+│       └── utils.py                             # Shared helper functions
+├── tests/                                       # Unit and integration tests
+├── app.py                                       # Streamlit application entry point
+├── Project Introduction Meeting_CFB-AP.pdf      # Project background and stakeholder context
+├── README.md                                    # Project overview and documentation
+├── requirements.txt                             # Python dependencies
+├── pyproject.toml                               # Project configuration and tooling
+├── Makefile                                     # Common development commands
+├── .pre-commit-config.yaml                      # Code quality and formatting hooks
+├── .editorconfig                                # Editor formatting standards
 ├── .gitattributes
 └── .gitignore
 ```

@@ -1,0 +1,16 @@
+feature,importance
+days_since_last_checkin,0.156
+attendance_recent,0.142
+attendance_prior,0.118
+attendance_last_45d,0.095
+weekly_attendance_recent,0.087
+attendance_ratio_recent_prior,0.073
+retail_spend_recent,0.062
+attendance_consistency_6w,0.058
+days_since_last_purchase,0.052
+tenure_months,0.048
+attendance_delta_recent_prior,0.041
+attendance_last_14d,0.038
+pending_cancel_flag,0.035
+recent_spend_share,0.032
+attendance_first_30d,0.028

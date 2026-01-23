@@ -1,0 +1,16 @@
+member_id,score,risk_tier,days_since_last_checkin,attend_recent_28,tenure_bucket,plan_norm
+M001,0.92,High,28,2,6-12 months,Unlimited
+M002,0.87,High,25,3,1-3 months,Limited
+M003,0.81,High,31,1,3-6 months,Unlimited
+M004,0.76,Medium,22,4,12+ months,Limited
+M005,0.73,Medium,19,5,6-12 months,Unlimited
+M006,0.68,Medium,26,2,3-6 months,Limited
+M007,0.64,Medium,20,6,12+ months,Unlimited
+M008,0.58,Low,15,8,6-12 months,Limited
+M009,0.55,Low,12,10,12+ months,Unlimited
+M010,0.52,Low,18,7,1-3 months,Limited
+M011,0.49,Low,14,9,3-6 months,Unlimited
+M012,0.45,Low,21,3,12+ months,Limited
+M013,0.41,Low,17,5,6-12 months,Unlimited
+M014,0.38,Low,24,2,1-3 months,Limited
+M015,0.35,Low,16,6,3-6 months,Unlimited

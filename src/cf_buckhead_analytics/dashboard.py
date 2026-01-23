@@ -1,12 +1,12 @@
-# src/cf_buckhead_analytics/dashboard.py
 """
 Streamlit dashboard for the CrossFit Buckhead churn project.
 """
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import altair as alt
 import pandas as pd
@@ -26,21 +26,23 @@ EXAMPLE_DATA_DIR = Path("data/example_data")
 
 
 def _latest_file(pattern: str, directory: Path) -> Path | None:
+    if not directory.exists():
+        return None
     files = sorted(directory.glob(pattern))
     return files[-1] if files else None
 
 
-def _load_feature_store() -> tuple[pd.DataFrame | None, pd.Timestamp | None, Path | None]:
+def _load_feature_store() -> tuple[pd.DataFrame | None, pd.Timestamp | None]:
     path = _latest_file("feature_store_*.parquet", EXAMPLE_DATA_DIR)
     if not path:
         path = _latest_file("feature_store_*.csv", EXAMPLE_DATA_DIR)
         if not path:
-            return None, None, None
+            return None, None
         df = pd.read_csv(path)
     else:
         df = pd.read_parquet(path)
     as_of = pd.Timestamp(path.stem.split("_")[-1])
-    return df, as_of, path
+    return df, as_of
 
 
 def _load_training_dataset() -> tuple[pd.DataFrame | None, pd.Timestamp | None]:
@@ -60,15 +62,11 @@ def _load_model_metadata() -> tuple[str, Path] | None:
     return latest.read_text(encoding="utf-8"), latest
 
 
-def _parse_metadata(
-    meta_text_path: tuple[str, Path] | None
-) -> tuple[dict[str, Any] | None, Path | None]:
+def _parse_metadata(meta_text_path: tuple[str, Path] | None) -> dict[str, Any] | None:
     if meta_text_path is None:
-        return None, None
-    import json
-
+        return None
     text, path = meta_text_path
-    return json.loads(text), path
+    return cast(dict[str, Any], json.loads(text))
 
 
 def _load_feature_importance(as_of: pd.Timestamp | None) -> pd.DataFrame | None:
@@ -109,10 +107,10 @@ def run_dashboard_app() -> None:
     st.title("CrossFit Buckhead Retention Dashboard")
     st.caption("Monitor churn risk, understand drivers, and prioritize weekly outreach.")
 
-    features_df, feature_as_of, feature_path = _load_feature_store()
+    features_df, feature_as_of = _load_feature_store()
     training_df, training_as_of = _load_training_dataset()
     metadata_text_path = _load_model_metadata()
-    metadata, metadata_path = _parse_metadata(metadata_text_path)
+    metadata = _parse_metadata(metadata_text_path)
     importance_df = _load_feature_importance(training_as_of or feature_as_of)
     outreach_df = _load_outreach(training_as_of or feature_as_of)
     cohort_df = _load_cohort_retention(feature_as_of)
@@ -179,7 +177,7 @@ def run_dashboard_app() -> None:
         tenure_chart = None
 
     if tenure_chart is not None:
-        st.altair_chart(tenure_chart, use_container_width=True)
+        st.altair_chart(tenure_chart, width="stretch")
     else:
         st.info("Tenure buckets are unavailable for the current feature snapshot.")
 
@@ -207,7 +205,7 @@ def run_dashboard_app() -> None:
         plan_chart = None
 
     if plan_chart is not None:
-        st.altair_chart(plan_chart, use_container_width=True)
+        st.altair_chart(plan_chart, width="stretch")
     else:
         st.info("Membership plan data not available; display skipped.")
 
@@ -226,7 +224,7 @@ def run_dashboard_app() -> None:
                 tooltip=["cohort_month", "attendance_month", "retention_rate"],
             )
         )
-        st.altair_chart(heatmap, use_container_width=True)
+        st.altair_chart(heatmap, width="stretch")
     else:
         st.info("Cohort retention matrix unavailable. Will populate once enough history accrues.")
 
@@ -242,7 +240,7 @@ def run_dashboard_app() -> None:
             "plan_norm",
         ]
         available_cols = [col for col in display_cols if col in outreach_df.columns]
-        st.dataframe(outreach_df[available_cols])
+        st.dataframe(outreach_df[available_cols], width="stretch")
         st.download_button(
             label="Download Outreach CSV",
             data=outreach_df.to_csv(index=False).encode("utf-8"),

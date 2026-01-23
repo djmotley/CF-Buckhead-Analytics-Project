@@ -1,0 +1,38 @@
+{
+  "model_type": "HistGradientBoosting",
+  "trained_on": "2024-09-28",
+  "features": [
+    "days_since_last_checkin",
+    "attendance_recent",
+    "attendance_prior",
+    "attendance_last_45d",
+    "attendance_last_14d",
+    "attendance_last_60d",
+    "attendance_lifetime",
+    "attendance_first_30d",
+    "weekly_attendance_recent",
+    "attendance_ratio_recent_prior",
+    "attendance_delta_recent_prior",
+    "tenure_days",
+    "tenure_months",
+    "avg_weekly_attendance_lifetime"
+  ],
+  "categorical_features": [
+    "tenure_bucket",
+    "plan_norm"
+  ],
+  "churn_rate": 0.089,
+  "pr_auc": 0.82,
+  "precision_at_top_share": 0.76,
+  "recall_at_top_share": 0.68,
+  "churn_top_share": 0.20,
+  "train_size": 241,
+  "holdout_size": 47,
+  "best_params": {
+    "max_iter": 250,
+    "learning_rate": 0.08,
+    "max_leaf_nodes": 15,
+    "min_samples_leaf": 5,
+    "l2_regularization": 0.1
+  }
+}

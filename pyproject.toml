@@ -13,8 +13,10 @@ authors = [
 ]
 license = { text = "MIT" }
 dependencies = [
+  "matplotlib>=3.10.7",
   "numpy>=1.26",
   "pandas>=2.2",
+  "scikit-learn>=1.7.2"
 ]
 
 [project.optional-dependencies]

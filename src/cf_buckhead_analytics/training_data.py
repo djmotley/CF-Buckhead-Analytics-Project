@@ -54,78 +54,76 @@ def _label_candidates(
     features: pd.DataFrame, raw: RawData, as_of: pd.Timestamp
 ) -> tuple[pd.DataFrame, str]:
     base = features.copy()
+    if "plan_norm" not in base.columns:
+        base["plan_norm"] = "Other"
+    else:
+        base["plan_norm"] = base["plan_norm"].fillna("Other").astype(str).replace({"": "Other"})
+
     if "attend_recent_28" not in base.columns:
         base["attend_recent_28"] = 0
 
     min_attend = getattr(config, "MIN_RECENT_CHECKINS", 1)
-    candidates = base[base["attend_recent_28"] >= min_attend].copy()
+    candidates = base.copy()
     candidates["churned"] = 0
     candidates["churn_event_date"] = pd.NaT
     candidates["churn_event_type"] = "none"
 
-    members = raw.members
-    label_mode = "inactivity-based"
+    members = raw.memberships
+    label_mode = "membership-status"
 
-    if members is not None and "status" in members.columns:
+    membership_cols = ["status", "plan_cancel_date", "plan_end_date"]
+
+    missing_cols = [col for col in membership_cols if col not in candidates.columns]
+    if members is not None and missing_cols:
         members_local = members.copy()
-        members_local["status_lower"] = members_local["status"].fillna("").astype(str).str.lower()
-        plan_cancel_raw = members_local.get("plan_cancel_date")
-        if plan_cancel_raw is not None:
-            members_local["plan_cancel_date"] = pd.to_datetime(plan_cancel_raw, errors="coerce")
-        else:
-            members_local["plan_cancel_date"] = pd.Series(
-                pd.NaT, index=members_local.index, dtype="datetime64[ns]"
-            )
+        merge_cols = [
+            col
+            for col in ["member_id", "status", "plan_cancel_date", "plan_end_date"]
+            if col in members_local.columns
+        ]
+        membership_join = members_local[merge_cols]
+        candidates = candidates.merge(membership_join, on="member_id", how="left")
 
-        plan_end_raw = members_local.get("plan_end_date")
-        if plan_end_raw is not None:
-            members_local["plan_end_date"] = pd.to_datetime(plan_end_raw, errors="coerce")
-        else:
-            members_local["plan_end_date"] = pd.Series(
-                pd.NaT, index=members_local.index, dtype="datetime64[ns]"
-            )
-        members_local["label_end_date"] = members_local["plan_cancel_date"].fillna(
-            members_local["plan_end_date"]
-        )
+    status_series = (
+        candidates["status"]
+        if "status" in candidates.columns
+        else pd.Series("", index=candidates.index)
+    ).fillna("")
+    status_lower = status_series.astype(str).str.lower()
 
-        merge_cols = members_local[["member_id", "status_lower", "label_end_date"]]
-        candidates = candidates.merge(merge_cols, on="member_id", how="left")
+    if "plan_cancel_date" in candidates.columns:
+        plan_cancel = pd.to_datetime(candidates["plan_cancel_date"], errors="coerce")
+    else:
+        plan_cancel = pd.Series(pd.NaT, index=candidates.index, dtype="datetime64[ns]")
 
-        already_cancelled = (
-            candidates["status_lower"].eq("cancelled")
-            & candidates["label_end_date"].notna()
-            & (candidates["label_end_date"] <= as_of)
-        )
-        if already_cancelled.any():
-            candidates = candidates[~already_cancelled].copy()
+    if "plan_end_date" in candidates.columns:
+        plan_end = pd.to_datetime(candidates["plan_end_date"], errors="coerce")
+    else:
+        plan_end = pd.Series(pd.NaT, index=candidates.index, dtype="datetime64[ns]")
 
-        lookahead = getattr(config, "CHURN_LOOKAHEAD_DAYS", 30)
-        future_mask = (
-            candidates["label_end_date"].notna()
-            & (candidates["label_end_date"] > as_of)
-            & (candidates["label_end_date"] <= as_of + pd.Timedelta(days=lookahead))
-        )
-
-        if future_mask.any():
-            label_mode = "future-cancel-date"
-            candidates.loc[future_mask, "churned"] = 1
-            candidates.loc[future_mask, "churn_event_date"] = candidates.loc[
-                future_mask, "label_end_date"
-            ]
-            candidates.loc[future_mask, "churn_event_type"] = "cancellation"
-
-    if label_mode == "inactivity-based":
-        print(
-            "Labeling fallback triggered: using inactivity >= "
-            f"{config.INACTIVITY_DAYS} days as churn signal."
-        )
-        inactivity_mask = candidates["days_since_last_checkin"] >= config.INACTIVITY_DAYS
-        candidates.loc[inactivity_mask, "churned"] = 1
-        candidates.loc[inactivity_mask, "churn_event_type"] = "inactivity"
-
-    candidates = candidates.drop(
-        columns=[col for col in ["status_lower", "label_end_date"] if col in candidates.columns]
+    cancel_status_flag = status_lower.eq("cancelled") & (
+        (plan_cancel.notna() & (plan_cancel <= as_of))
+        | (plan_cancel.isna() & plan_end.notna() & (plan_end < as_of))
     )
+    cancel_date_flag = plan_cancel.notna() & (plan_cancel <= as_of)
+    plan_end_flag = plan_end.notna() & (plan_end < as_of)
+    churn_mask = cancel_status_flag | cancel_date_flag | plan_end_flag
+
+    if members is not None:
+        candidates.loc[churn_mask, "churned"] = 1
+        candidates.loc[churn_mask, "churn_event_type"] = "membership"
+        candidates.loc[churn_mask, "churn_event_date"] = plan_cancel.fillna(plan_end)
+    else:
+        label_mode = "no-membership-data"
+        candidates["status"] = ""
+        candidates["plan_cancel_date"] = pd.NaT
+        candidates["plan_end_date"] = pd.NaT
+
+    if "plan_norm" in candidates.columns:
+        coach_mask = candidates["plan_norm"].astype(str).str.lower() == "coach/staff"
+        if coach_mask.any():
+            candidates = candidates.loc[~coach_mask].copy()
+
     candidates = candidates.drop_duplicates("member_id", keep="last").reset_index(drop=True)
     return candidates, label_mode
 

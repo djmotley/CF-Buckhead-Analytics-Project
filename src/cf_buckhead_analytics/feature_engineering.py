@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 from . import config
-from .data_prep import RawData, ensure_directories, load_raw_data
+from .data_prep import RawData, ensure_directories, load_raw_data, normalize_plan
 
 
 @dataclass(frozen=True)
@@ -34,7 +34,7 @@ def generate_feature_store(as_of: str | None = None) -> FeatureArtifacts:
     as_of_ts = _resolve_as_of(raw.attendance, as_of)
     feature_df = _build_feature_matrix(raw, as_of_ts)
     _save_feature_store(feature_df, as_of_ts)
-    _maybe_save_cohort_retention(raw.attendance, as_of_ts)
+    _maybe_save_cohort_retention(raw, as_of_ts)
     print(f"Feature snapshot saved: {as_of_ts.date()} … rows: {len(feature_df)}")
     return FeatureArtifacts(features=feature_df, as_of=as_of_ts)
 
@@ -137,26 +137,46 @@ def _build_feature_matrix(raw: RawData, as_of: pd.Timestamp) -> pd.DataFrame:
     else:
         feature_df["class_type_share_endurance"] = 0.0
 
-    bins = [0, 60, 150, 360, 10_000]
-    labels = ["New", "Early", "Core", "Loyal"]
-    feature_df["tenure_bucket"] = pd.cut(
-        feature_df["tenure_days"], bins=bins, labels=labels, include_lowest=True
-    ).astype(str)
+    tenure_days = feature_df["tenure_days"].fillna(0)
+    conditions = [
+        tenure_days < 90,
+        tenure_days < 180,
+        tenure_days < 365,
+    ]
+    buckets = ["New (0-3mo)", "Early (3-6mo)", "Established (6-12mo)"]
+    feature_df["tenure_bucket"] = np.select(conditions, buckets, default="Long-Term (12+mo)")
 
     feature_df["snapshot_as_of"] = as_of
 
-    if raw.members is not None:
-        members = raw.members.copy()
+    if raw.memberships is not None:
+        members = raw.memberships.copy()
         members = members.drop_duplicates("member_id")
-        members["plan_norm"] = members["plan"].apply(_normalize_plan_name)
-        members["orig_status"] = members["status"].str.lower()
+        if "plan_norm" not in members.columns and "plan" in members.columns:
+            members["plan_norm"] = members["plan"].apply(normalize_plan)
         feature_df = feature_df.merge(members, on="member_id", how="left")
     else:
-        feature_df["plan_norm"] = "Unknown"
         feature_df["status"] = pd.Series([None] * len(feature_df), dtype="object")
+        feature_df["plan"] = pd.Series([""] * len(feature_df), dtype="object")
+        feature_df["plan_norm"] = "Other"
         feature_df["plan_cancel_date"] = pd.NaT
         feature_df["plan_end_date"] = pd.NaT
         feature_df["member_since"] = pd.NaT
+        feature_df["first_name"] = ""
+        feature_df["last_name"] = ""
+
+    if "plan_norm" in feature_df.columns:
+        feature_df["plan_norm"] = (
+            feature_df["plan_norm"].fillna("Other").astype(str).replace({"": "Other"})
+        )
+    else:
+        feature_df["plan_norm"] = "Other"
+
+    if "first_name" in feature_df.columns:
+        feature_df["first_name"] = feature_df["first_name"].fillna("").astype(str)
+    if "last_name" in feature_df.columns:
+        feature_df["last_name"] = feature_df["last_name"].fillna("").astype(str)
+
+    feature_df = feature_df.drop(columns=["plan"], errors="ignore")
 
     feature_df["attend_recent_28"] = feature_df["attend_recent_28"].astype(int)
     feature_df["attend_prior_29_84"] = feature_df["attend_prior_29_84"].astype(int)
@@ -183,7 +203,15 @@ def _base_feature_columns() -> list[str]:
 
 def _optional_member_columns(df: pd.DataFrame) -> list[str]:
     extras = []
-    for col in ["plan_norm", "status", "plan_cancel_date", "plan_end_date", "member_since"]:
+    for col in [
+        "plan_norm",
+        "status",
+        "plan_cancel_date",
+        "plan_end_date",
+        "member_since",
+        "first_name",
+        "last_name",
+    ]:
         if col in df.columns:
             extras.append(col)
     return extras
@@ -191,19 +219,6 @@ def _optional_member_columns(df: pd.DataFrame) -> list[str]:
 
 def _class_type_alias(name: str) -> str:
     return name.title()
-
-
-def _normalize_plan_name(plan: str) -> str:
-    text = (plan or "").lower()
-    if "coach" in text:
-        return "Coach"
-    if "vip" in text:
-        return "VIP"
-    if "unlimited" in text or "$189" in text or "$149" in text:
-        return "Unlimited"
-    if "10" in text or "12" in text or "pack" in text:
-        return "Limited"
-    return "Other"
 
 
 def _save_feature_store(features: pd.DataFrame, as_of: pd.Timestamp) -> None:
@@ -214,38 +229,59 @@ def _save_feature_store(features: pd.DataFrame, as_of: pd.Timestamp) -> None:
     features.to_csv(csv_path, index=False)
 
 
-def _maybe_save_cohort_retention(attendance: pd.DataFrame, as_of: pd.Timestamp) -> None:
+def _maybe_save_cohort_retention(raw: RawData, as_of: pd.Timestamp) -> None:
+    attendance = raw.attendance.copy()
+    attendance = attendance[attendance["class_ts"] <= as_of]
     if attendance.empty:
         print("Cohort retention skipped: no attendance records.")
         return
 
-    cohorts = attendance.groupby("member_id")["class_ts"].min().dt.to_period("M").rename("cohort")
-    attendance = attendance.copy()
-    attendance["cohort"] = attendance["member_id"].map(cohorts)
-    attendance["attendance_month"] = attendance["class_ts"].dt.to_period("M")
+    memberships = raw.memberships
+    if memberships is None or memberships.empty or "member_since" not in memberships.columns:
+        print("Cohort retention skipped: missing member tenure data.")
+        return
 
-    counts = (
-        attendance.groupby(["cohort", "attendance_month"])["member_id"]
-        .nunique()
-        .reset_index(name="active_members")
+    member_cohort = memberships[["member_id", "member_since"]].copy()
+    member_cohort["member_since"] = pd.to_datetime(member_cohort["member_since"], errors="coerce")
+    member_cohort = member_cohort.dropna(subset=["member_since"])
+    if member_cohort.empty:
+        print("Cohort retention skipped: no valid member_since values.")
+        return
+
+    member_cohort["cohort_month"] = member_cohort["member_since"].dt.to_period("M").astype(str)
+    cohort_sizes = (
+        member_cohort.groupby("cohort_month")["member_id"].nunique().rename("total_members")
     )
-    if counts.empty:
+
+    attendance["attendance_month"] = attendance["class_ts"].dt.to_period("M").astype(str)
+    attendance = attendance.merge(
+        member_cohort[["member_id", "cohort_month"]],
+        on="member_id",
+        how="inner",
+    )
+    if attendance.empty:
+        print("Cohort retention skipped: attendance does not align with cohorts.")
+        return
+
+    active = (
+        attendance.groupby(["cohort_month", "attendance_month"])["member_id"]
+        .nunique()
+        .reset_index(name="retained_members")
+    )
+    if active.empty:
         print("Cohort retention skipped: insufficient data.")
         return
 
-    cohort_sizes = counts.groupby("cohort")["active_members"].transform("first")
-    counts["cohort_size"] = cohort_sizes
-    counts["retention_rate"] = counts["active_members"] / counts["cohort_size"].replace(0, np.nan)
-
-    retention = counts.copy()
-    retention["cohort_month"] = retention["cohort"].astype(str)
-    retention["months_since_join"] = retention["attendance_month"].astype("int64") - retention[
-        "cohort"
-    ].astype("int64")
-    retention_path = Path(config.PROCESSED_DIR) / f"cohort_retention_{as_of.date().isoformat()}.csv"
-    retention[["cohort_month", "attendance_month", "months_since_join", "retention_rate"]].to_csv(
-        retention_path, index=False
+    active = active.merge(cohort_sizes.reset_index(), on="cohort_month", how="left")
+    active["retention_rate"] = active["retained_members"] / active["total_members"].replace(
+        0, np.nan
     )
+
+    retention = active.sort_values(["cohort_month", "attendance_month"])
+    retention_path = Path(config.PROCESSED_DIR) / f"cohort_retention_{as_of.date().isoformat()}.csv"
+    retention[
+        ["cohort_month", "attendance_month", "retained_members", "total_members", "retention_rate"]
+    ].to_csv(retention_path, index=False)
 
 
 def main(argv: list[str] | None = None) -> None:

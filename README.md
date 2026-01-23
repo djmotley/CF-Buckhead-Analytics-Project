@@ -1,157 +1,160 @@
-# CrossFit Buckhead Retention Analytics
+# Fighting Member Churn with Data
 
-**A portfolio-ready project that shows how Derek Motley uses data to spot churn risk early, tailor outreach, and quantify the impact of retention work at a CrossFit gym.**
+**An Aspiring Analyst’s Journey to Solving Real Business Problems at CrossFit Buckhead**
 
----
-
-## Why This Matters
-
-Early churn hurts recurring revenue and morale. The Buckhead gym owner wanted a weekly signal that highlights which members are drifting before they cancel, plus a tight feedback loop that shows whether “white‑glove” outreach is paying off. The only guaranteed data set is a PushPress attendance export (`data/raw/Attendance.csv`), and occasionally a roster export (`Members.csv`). Everything in this repo is designed to run—even if the member file is missing—while still delivering a compelling story to admissions committees and hiring managers.
+🔴 **Live Dashboard:**
+[https://cf-buckhead-analytics-project.streamlit.app/](https://cf-buckhead-analytics-project.streamlit.app/)
 
 ---
 
-## Acquisition Shock: January–February 2025
+## Prologue: Why I Started
 
-During admissions season the gym acquired another box. The member base doubled overnight, tenure distributions shifted, and the old churn model—trained on “Original” members—started flagging the wrong people. The pipeline now detects (and gracefully survives) this kind of shock:
+For a long time, I struggled to find a clear starting point for my career. I wanted to commit to something I genuinely enjoyed doing, and that ultimately led me to business analytics. This project began as a personal litmus test to answer one honest question:
+**Do I actually enjoy the work that business analysts do?**
 
-- **Lifecycle buckets** adjust automatically: `New (0–2 months)`, `Early (2–5)`, `Core (6–11)`, `Loyal (12+)`.
-- **Origin awareness** appears only when it can be inferred (Original vs. New vs. Acquired); otherwise the code continues without it.
-- **Time-bounded labeling** keeps us honest: we only call someone churned when a real cancellation or inactivity event occurs within the configured window.
-
----
-
-## Data Reality (and Fallbacks)
-
-| File | Required | Key Columns | Notes |
-|------|----------|-------------|-------|
-| `data/raw/Attendance.csv` | ✅ | `member_id`, `class_ts`, `class_type` | Future timestamps are clipped to “today”. Missing `class_type` becomes “CrossFit”. |
-| `data/raw/Members.csv` | optional | `member_id`, `status`, `plan`, `memberSince`, `planCancelDate`, `planEndDate` (varies) | When present, the loader normalizes column names, parses dates, and derives missing fields (e.g., `member_since` falls back to first attendance). When absent, the pipeline falls back to behavior-only churn. |
-
-No other files are assumed. Old references to `Cancellations.csv`, `Store_Sales.csv`, or “FINAL” exports have been removed.
+Rather than guessing, I decided try and replicate the work real business analysts do. I chose a real-world business problem with real constraints and real ambiguity. The result was one of the most challenging and rewarding learning experiences I’ve had, which helped confirm that this is the career path I want to pursue.
 
 ---
 
-## Pipeline Overview
+## Defining the Problem
 
-### 1. Ingestion (`data_prep.py`)
-- Normalizes headers (`Member_ID`, `memberID`, etc.) and ensures `member_id` is always a string.
-- Clips future attendance timestamps to “today” while preserving time-of-day.
-- Loads optional member roster, standardizes status/plan fields, converts plan end/cancel dates, and fills missing `member_since` from attendance.
+The business I chose was **CrossFit Buckhead**, a gym I’m a member of and previously coached at. After meeting with the owner and listening to her pain points, one  stood out clearly:
+**Member churn.**
 
-### 2. Feature Store (`feature_engineering.py`)
-- Snapshot date (`as_of`) defaults to the latest attendance date ≤ today (honors `config.AS_OF_OVERRIDE` or CLI `--as_of`).
-- Per-member features include: `first_seen`, `last_checkin`, `tenure_days`, `days_since_last_checkin`, `attend_recent_28`, `attend_prior_29_84`, `lifetime_attend`, class-type mix (Endurance share), and `tenure_bucket`.
-- Optional enrichments: plan normalization (`Unlimited`, `Limited`, `Coach`, `VIP`, `Other`) and `member_since` when roster data exists.
-- Saves both `.parquet` and `.csv` feature stores plus a cohort-retention matrix (`cohort_retention_<as_of>.csv`) when enough history exists.
-
-Command:
-```bash
-python -m cf_buckhead_analytics.feature_engineering --as_of 2025-10-01
-```
-Output example:
-```
-Feature snapshot saved: 2025-10-01 … rows: 508
-```
-
-### 3. Labeling (`training_data.py`)
-- Candidates = members with `attend_recent_28 > 0` (someone we can still save).
-- Label priority:
-  1. **Status-based**: `status.lower() == "cancelled"`.
-  2. **Date-based**: plan cancel/end date within `INACTIVITY_DAYS` (default 60) of the snapshot.
-  3. **Inactivity fallback**: `days_since_last_checkin >= 60` (prints a clear message when this kicks in).
-- Prints labeling mode, candidate counts (min/median/max), and positive rate. Saves `training_dataset_<as_of>.parquet`.
-
-Command:
-```bash
-python -m cf_buckhead_analytics.training_data --as_of 2025-10-01
-```
-Output excerpt:
-```
-Labeling used: status-based; positive rate: 0.147
-Snapshots: 1
-Candidates per snapshot (min/median/max): 512 / 512 / 512
-Overall positive rate (positives / candidates): 0.147
-Saved training dataset to data/processed/training_dataset_2025-10-01.parquet
-```
-
-### 4. Modeling (`churn_regression.py`)
-- Drops plan_norm == “Coach” to keep the focus on member-facing plans.
-- Features: `days_since_last_checkin`, `attend_recent_28`, `attend_prior_29_84`, `lifetime_attend`, `tenure_days`, plus categorical `tenure_bucket`, `plan_norm`.
-- HistGradientBoostingClassifier (scikit-learn) with stratified hold-out and permutation importance (when both classes present).
-- Saves model artifact (`models/churn_model_<as_of>.pkl`), metadata JSON (PR-AUC, precision/recall at top share, sample counts), feature importance CSV, and `reports/outreach/outreach_<as_of>.csv` containing top 15 at-risk members with risk tiers.
-
-Command:
-```bash
-python -m cf_buckhead_analytics.churn_regression --as_of 2025-10-01
-```
-Output excerpt:
-```
-Training samples: 512 (positive rate 0.147)
-Top feature drivers:
-  - days_since_last_checkin: 0.0821
-  - attend_recent_28: 0.0576
-  ...
-PR-AUC: 0.712; Precision@Top 20%: 0.643; Recall@Top 20%: 0.512; Saved outreach to reports/outreach/outreach_2025-10-01.csv
-```
-
-### 5. Dashboard (`dashboard.py`)
-- Launch with:
-  ```bash
-  streamlit run src/cf_buckhead_analytics/dashboard.py
-  ```
-- Displays KPIs (snapshot, positive rate, PR-AUC, precision at top share), tenure and plan mix bar charts, cohort retention heatmap (if available), outreach shortlist (top 10–15) with download, and “Why these members?” top feature drivers.
+For a small, membership-based business, churn has an outsized impact. Acquiring new members is expensive, while retaining existing ones is far more sustainable. This project aimed to answer a core question:
+**Can data help us understand why members leave and how to retain them more effectively?**
 
 ---
 
-## Metrics That Matter
+## The Challenge and My Starting Point
 
-- **PR-AUC (Average Precision):** gauges ranking quality when churners are rare. Accuracy would overstate performance.
-- **Precision & Recall @ Top 20%:** reflects the owner’s capacity—15 outreach slots per week. High precision means fewer wasted calls; recall shows coverage of true churners.
-- **Positive Rate in Training Data:** keeps us honest about class imbalance. If status/cancel data disappears, the fallback prints a warning so stakeholders know we’re on an inactivity proxy.
+Starting this project was overwhelming. I was balancing GMAT preparation, work, training, and volunteering—all while learning an entirely new technical domain. With guidance from a mentor and AI-assisted tools, I established a foundation and iterated from there.
 
----
+### Leveraging AI as a Learning Accelerator
+AI tools like GitHub Copilot and ChatGPT Codex played a significant role in:
+- Drafting notebook structures
+- Debugging errors and edge cases
+- Understanding analytics workflows
 
-## Weekly Operational Loop
-
-1. **Drop new CSVs** into `data/raw/`.
-2. **Rebuild artifacts**:
-   ```bash
-   python -m cf_buckhead_analytics.feature_engineering
-   python -m cf_buckhead_analytics.training_data
-   python -m cf_buckhead_analytics.churn_regression
-   ```
-3. **Review the dashboard** for onboarding trends, plan mix, cohort retention, and the outreach shortlist.
-4. **Download outreach CSV** and personalize contact scripts around the top drivers (e.g., “you’ve missed the last three weeks—need help booking classes?”).
-5. **Log outcomes** back into PushPress; the next week’s run captures behavior changes automatically.
+This approach reflects how I see my future role as a business analyst:
+**Bridging data, technology, and business strategy.**
 
 ---
 
-## What’s Next
+## Building the Project
 
-- **PushPress API integration** to eliminate manual CSV handling and capture membership status changes in real time.
-- **Expanded behavioral signals** (no-show penalties, coach check-ins, merchandise purchases) to refine the feature store.
-- **Uplift modeling** to prioritize members whose retention probability increases the most after outreach.
-- **Automated scheduling** (e.g., GitHub Actions) to refresh scores every Sunday night and email the outreach CSV to the owner.
+### 1. Data Discovery
+I began by researching churn predictors in subscription-based businesses and identifying meaningful features like attendance frequency, streaks, and engagement gaps. CrossFit Buckhead’s data came from **PushPress**, a gym management platform.
+
+### 2. Data Understanding and Cleaning
+Working with real PushPress exports taught me that operational data is rarely clean. I gained hands-on experience with:
+- Messy, imperfect data
+- Feature engineering
+- Translating raw records into behavior-based metrics
+
+### 3. Modeling and Interpretation
+Given the small dataset and the need for interpretability, I focused on **gradient-boosted decision trees**. This choice prioritized:
+- Clear explanations of feature impact
+- Actionable insights over marginal performance gains
+
+### 4. Turning Insights into Action (Dashboard)
+I built a **Streamlit dashboard** to visualize engagement patterns and churn-related trends. This taught me how to:
+- Connect data pipelines to a front-end tool
+- Think critically about usability
+- Translate analysis into something tangible
+
+---
+
+## Key Learnings and Reflections
+
+This project taught me far more than technical skills:
+- **Asking the right questions** matters more than writing perfect code.
+- Simpler, interpretable models often provide more business value.
+- Real data introduces problems that cannot be ignored.
+- Tools (including AI) are most powerful when used thoughtfully.
+
+Most importantly, I discovered that I enjoy the ambiguity, problem-solving, and communication inherent in business analytics.
+
+---
+
+## Impact, Limitations, and Next Steps
+
+### Achievements
+- A complete project structure
+- A working churn model
+- A live (but evolving) dashboard
+
+### Improvements Moving Forward
+- Refining churn definitions and labeling logic
+- Improving feature engineering (e.g., tenure normalization, engagement decay)
+- Optimizing dashboard performance and data pipelines
+- Adding clearer, business-oriented visualizations
+
+---
+
+## Technical Snapshot
+
+- **Tools:** Python, Pandas, Scikit-learn, Streamlit, Jupyter Notebooks, GitHub
+- **Data Source:** Real PushPress exports (attendance and membership data)
+- **Objective:** Understand and predict member churn; visualize engagement trends
+
+### Project Structure
+```
+CF-Buckhead-Analytics-Project/
+├── data/
+│   ├── raw/                # Raw PushPress exports
+│   ├── processed/          # Cleaned and feature-engineered datasets
+│   └── reports/            # Outreach lists and cohort retention matrices
+├── notebooks/
+│   ├── 01_explore.ipynb  # Data exploration and cleaning
+│   ├── 02_modeling.ipynb     # Churn model development
+│   └── 03_dashboard.ipynb    # Dashboard prototyping
+├── src/
+│   ├── data_prep.py          # Data ingestion and cleaning scripts
+│   ├── feature_engineering.py # Feature engineering pipeline
+│   ├── training_data.py      # Labeling and training dataset creation
+│   ├── churn_regression.py   # Churn model training and evaluation
+│   └── dashboard.py          # Streamlit dashboard app
+├── README.md                 # Project overview and documentation
+└── requirements.txt          # Python dependencies
+```
+
+---
+
+## Acknowledgments
+
+- **Dylan Alexander:** For mentorship, technical guidance, and patience
+- **Alison Giannavola (CrossFit Buckhead Owner):** For trust, access, and support
+- **Carl Gold:** For inspiration and insights on churn analytics
 
 ---
 
 ## How to Reproduce
 
-```bash
-pip install -e .
-pre-commit run --all-files
-pytest
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/CF-Buckhead-Analytics-Project.git
+   cd CF-Buckhead-Analytics-Project
+   ```
 
-python -m cf_buckhead_analytics.feature_engineering
-python -m cf_buckhead_analytics.training_data
-python -m cf_buckhead_analytics.churn_regression
-streamlit run src/cf_buckhead_analytics/dashboard.py
-```
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-The sample data in `data/raw_sample_dylan/` is included for smoke testing, but the project is meant to run on real PushPress exports placed in `data/raw/`.
+3. Run the pipeline:
+   ```bash
+   python -m src.data_prep
+   python -m src.feature_engineering
+   python -m src.training_data
+   python -m src.churn_regression
+   ```
+
+4. Launch the dashboard:
+   ```bash
+   streamlit run src/dashboard.py
+   ```
 
 ---
 
-## About Derek Motley
-
-CrossFit Level 1 Trainer, aspiring analytics leader, and the storyteller behind this project. Derek blends coaching insight with statistical rigor to help boutique gyms retain members and grow sustainably.
+This project is a living document, reflecting my growth as an aspiring business analyst. Every iteration represents a new skill learned, a limitation discovered, or a better question asked.

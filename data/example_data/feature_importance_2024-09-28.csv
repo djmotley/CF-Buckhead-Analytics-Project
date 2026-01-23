@@ -1,0 +1,11 @@
+feature,importance
+days_since_last_checkin,0.287
+attendance_ratio_recent_prior,0.156
+weekly_attendance_recent,0.134
+attendance_last_14d,0.098
+attendance_delta_recent_prior,0.087
+tenure_months,0.062
+attendance_first_30d,0.045
+avg_weekly_attendance_lifetime,0.038
+attendance_lifetime,0.031
+attendance_last_45d,0.025

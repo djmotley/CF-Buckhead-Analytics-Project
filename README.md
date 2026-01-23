@@ -7,18 +7,20 @@
 
 ---
 
-## Prologue: Why I Started
+## Why I Started
 
 For a long time, I struggled to find a clear starting point for my career. I wanted to commit to something I genuinely enjoyed doing, and that ultimately led me to business analytics. This project began as a personal litmus test to answer one honest question:
 **Do I actually enjoy the work that business analysts do?**
 
-Rather than guessing, I decided try and replicate the work real business analysts do. I chose a real-world business problem with real constraints and real ambiguity. The result was one of the most challenging and rewarding learning experiences I’ve had, which helped confirm that this is the career path I want to pursue.
+Rather than guessing, I decided to try to replicate the work real business analysts do. I chose a real-world business problem with real constraints and real ambiguity. The result was one of the most challenging and rewarding learning experiences I’ve had, which helped confirm that this is the career path I want to pursue.
+
+In addition to self-discovery, I wanted to find a way to give back to CrossFit Buckhead, a community that has given me so much since my move to Atlanta. Although the result was not as earth-shattering as I wanted it to be, the insights gained provoke thoughtful questions.
 
 ---
 
 ## Defining the Problem
 
-The business I chose was **CrossFit Buckhead**, a gym I’m a member of and previously coached at. After meeting with the owner and listening to her pain points, one  stood out clearly:
+The business I chose was **CrossFit Buckhead**, a gym I’m a member of and previously coached at. After meeting with the owner and listening to her pain points, one issue stood out clearly:
 **Member churn.**
 
 For a small, membership-based business, churn has an outsized impact. Acquiring new members is expensive, while retaining existing ones is far more sustainable. This project aimed to answer a core question:
@@ -82,7 +84,7 @@ Most importantly, I discovered that I enjoy the ambiguity, problem-solving, and 
 ### Achievements
 - A complete project structure
 - A working churn model
-- A live (but evolving) dashboard
+- A live dashboard with clear, actionable insights
 
 ### Improvements Moving Forward
 - Refining churn definitions and labeling logic
@@ -95,6 +97,7 @@ Most importantly, I discovered that I enjoy the ambiguity, problem-solving, and 
 ## Technical Snapshot
 
 - **Tools:** Python, Pandas, Scikit-learn, Streamlit, Jupyter Notebooks, GitHub
+- **Modeling:** Gradient Boosted Trees (XGBoost/LightGBM/sklearn)
 - **Data Source:** Real PushPress exports (attendance and membership data)
 - **Objective:** Understand and predict member churn; visualize engagement trends
 
@@ -151,7 +154,7 @@ CF-Buckhead-Analytics-Project/
    pip install -r requirements.txt
    ```
 
-3. Run the pipeline:
+3. (Optional) Run the pipeline:
    ```bash
    python -m cf_buckhead_analytics.data_prep
    python -m cf_buckhead_analytics.feature_engineering

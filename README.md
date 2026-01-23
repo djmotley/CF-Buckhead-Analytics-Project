@@ -32,7 +32,31 @@ For a small, membership-based business, churn has an outsized impact. Acquiring 
 
 ## The Challenge and My Starting Point
 
-Starting this project was overwhelming. I was balancing GMAT preparation, work, training, and volunteering—all while learning an entirely new technical domain. With guidance from a mentor and AI-assisted tools, I established a foundation and iterated from there.
+Starting this project was overwhelming. I was balancing GMAT preparation, work, training, and volunteering—all while learning an entirely new technical domain. I began my researching membership-based fitness businesses, the general construction of data analytics projects, and the concept of churn. With guidance from a mentor and AI-assisted tools, I established a foundation and iterated from there.
+
+### Laying the Foundation: Research & Learning Inputs
+Before building the project in Visual Studio Code, I spent time understanding how churn is approached in practice—both from a business and analytical perspective. The following resources helped shape my thinking, feature selection, and modeling choices. In addition, they taught me how to navigate the tools I needed to make this project whole
+
+#### Churn & Retention Strategy
+- [Fighting Churn With Data: DataCamp Webinar](https://www.datacamp.com/resources/webinars/fighting-customer-churn-with-data)
+- Predicting Gym Member Churn to Support Targeted Retention
+- Reducing Churn for Jui Jitsu Academies and Gyms
+
+#### Git & GitHub
+- Git Tutorial For Dummies
+- Master GitHub: From Beginner to Expert in 46 Mins
+
+#### Project Structure
+- Data Science Portfolio Project - Churn prediction model
+- What is Churn and how to build a Churn Model (Data Terms Explained)
+- Create a Standout Project Write-Up | Data Analyst Insights
+- Getting Started with Jupyter Notebooks in VS Code
+
+#### Statistic Modeling
+- Visual Guide to Gradient Boosted Trees (xgboost)
+- Decision Trees, Random Forests and Gradient Boosting: What's the Difference?
+- ROC and AUC, Clearly Explained!
+
 
 ### Leveraging AI as a Learning Accelerator
 AI tools like GitHub Copilot and ChatGPT Codex played a significant role in:

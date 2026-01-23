@@ -39,27 +39,28 @@ Before building the project in Visual Studio Code, I spent time understanding ho
 
 #### Churn & Retention Strategy
 - [Fighting Churn With Data: DataCamp Webinar](https://www.datacamp.com/resources/webinars/fighting-customer-churn-with-data)
-- Predicting Gym Member Churn to Support Targeted Retention
-- Reducing Churn for Jui Jitsu Academies and Gyms
+- [Predicting Gym Member Churn to Support Targeted Retention](https://medium.com/@dmitriy.bolotov/predicting-gym-member-churn-to-support-targeted-retention-02fc7b0df8ca)
+- [Reducing Churn for Jui Jitsu Academies and Gyms](https://www.youtube.com/watch?v=QYNYJJcotHA&t=91s)
 
 #### Git & GitHub
-- Git Tutorial For Dummies
-- Master GitHub: From Beginner to Expert in 46 Mins
+- [Git Tutorial For Dummies](https://www.youtube.com/watch?v=mJ-qvsxPHpY)
+- [Master GitHub: From Beginner to Expert in 46 Mins](https://www.youtube.com/watch?v=pJYOG6klqj8)
 
 #### Project Structure
-- Data Science Portfolio Project - Churn prediction model
-- What is Churn and how to build a Churn Model (Data Terms Explained)
-- Create a Standout Project Write-Up | Data Analyst Insights
-- Getting Started with Jupyter Notebooks in VS Code
+- [Data Science Portfolio Project - Churn prediction model](https://www.youtube.com/watch?v=-8stRxINNeY)
+- [What is Churn and how to build a Churn Model (Data Terms Explained)](https://www.youtube.com/watch?v=iAhPEFaH_jo)
+- [Create a Standout Project Write-Up | Data Analyst Insights](https://www.youtube.com/watch?v=vgZuTpOj9fE)
+- [Getting Started with Jupyter Notebooks in VS Code](https://www.youtube.com/watch?v=suAkMeWJ1yE)
 
 #### Statistic Modeling
-- Visual Guide to Gradient Boosted Trees (xgboost)
-- Decision Trees, Random Forests and Gradient Boosting: What's the Difference?
-- ROC and AUC, Clearly Explained!
+- [Visual Guide to Gradient Boosted Trees (xgboost)](https://www.youtube.com/watch?v=TyvYZ26alZs)
+- [Decision Trees, Random Forests and Gradient Boosting: What's the Difference? (Beginner Data Science](https://www.youtube.com/watch?v=uV2gdNt2MLc)
+- [ROC and AUC, Clearly Explained!](https://www.youtube.com/watch?v=4jRBRDbJemM)
 
 
 ### Leveraging AI as a Learning Accelerator
-AI tools like GitHub Copilot and ChatGPT Codex played a significant role in:
+Given my current skill level, I decided to leverage AI in the construction of this project. However, I made it a point to use it thoughtfully as a learning accelerator, rather than solely relying on it to do all the work for me. While AI helped close technical gaps, it did not have the business conversations for me, make formatting decisions, and never had the last say. Tools like GitHub Copilot and ChatGPT Codex were instrumental in:
+
 - Drafting notebook structures
 - Debugging errors and edge cases
 - Understanding analytics workflows

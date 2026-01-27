@@ -12,15 +12,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-try:
-    from . import config
-except ImportError:  # pragma: no cover - streamlit executes file directly
-    import sys
-
-    PACKAGE_ROOT = Path(__file__).resolve().parents[1]
-    if str(PACKAGE_ROOT) not in sys.path:
-        sys.path.append(str(PACKAGE_ROOT))
-    import cf_buckhead_analytics.config as config  # pragma: no cover
+from . import config
 
 EXAMPLE_DATA_DIR = Path("data/example_data")
 
